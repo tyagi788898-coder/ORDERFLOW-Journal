@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.data.TradeEntry
-import com.institutional.tradingjournal.ui.viewmodel.TradingViewModel
+import com.institutional.tradingjournal.model.TradeEntry
+import com.institutional.tradingjournal.viewmodel.TradingViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -51,7 +51,6 @@ fun JournalChecklistScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Pair & Type
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -74,7 +73,6 @@ fun JournalChecklistScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Result & Timeframe
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
