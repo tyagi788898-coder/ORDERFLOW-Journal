@@ -17,10 +17,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.institutional.tradingjournal.ui.components.BottomNavItem
 import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
-import com.institutional.tradingjournal.ui.screens.DashboardScreen
-import com.institutional.tradingjournal.ui.screens.NewTradeDialog
+import com.institutional.tradingjournal.ui.screens.*
 import com.institutional.tradingjournal.ui.theme.DarkBackground
 import com.institutional.tradingjournal.ui.theme.GoldPrimary
+import com.institutional.tradingjournal.ui.viewmodel.StrategyViewModel
 import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
 
 @Composable
@@ -30,6 +30,7 @@ fun NavGraph() {
     val currentRoute = navBackStackEntry?.destination?.route ?: BottomNavItem.Dashboard.route
 
     val tradeViewModel: TradeViewModel = hiltViewModel()
+    val strategyViewModel: StrategyViewModel = hiltViewModel()
     var showNewTradeDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -58,16 +59,16 @@ fun NavGraph() {
                 )
             }
             composable(BottomNavItem.Journal.route) {
-                PlaceholderScreen("JOURNAL HISTORY")
+                StrategyManagerScreen(viewModel = strategyViewModel)
             }
             composable(BottomNavItem.Calendar.route) {
-                PlaceholderScreen("TRADING CALENDAR")
+                CalendarAnalyticsScreens(viewModel = tradeViewModel, isCalendarView = true)
             }
             composable(BottomNavItem.Analytics.route) {
-                PlaceholderScreen("INSTITUTIONAL ANALYTICS")
+                CalendarAnalyticsScreens(viewModel = tradeViewModel, isCalendarView = false)
             }
             composable(BottomNavItem.Settings.route) {
-                PlaceholderScreen("SYSTEM SETTINGS")
+                SettingsScreen()
             }
         }
 
@@ -81,16 +82,3 @@ fun NavGraph() {
         }
     }
 }
-
-@Composable
-fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBackground),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = title, color = GoldPrimary, fontSize = 18.sp)
-    }
-}
-
