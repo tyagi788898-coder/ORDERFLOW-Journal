@@ -1,107 +1,96 @@
 package com.institutional.tradingjournal.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.ui.theme.*
 
 @Composable
 fun SettingsScreen() {
-    var isBiometricEnabled by remember { mutableStateOf(true) }
+    var isSignedIn by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Color(0xFF0D0E12))
             .padding(16.dp)
     ) {
         Text(
-            text = "SYSTEM SETTINGS",
-            color = GoldPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Security, Offline Database Backup & Preferences",
-            color = TextMuted,
-            fontSize = 12.sp
+            text = "Settings & Backup",
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Security Section
+        // Account / Google Sign-In Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, BorderGlass, RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+                .padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF16181E)),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Security & Privacy", color = GoldPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Google Account Cloud Backup",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = if (isSignedIn) "Status: Signed In (Auto-Sync Active)" else "Status: Not Signed In",
+                    color = if (isSignedIn) Color(0xFF00E676) else Color.Gray,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
+                Button(
+                    onClick = { isSignedIn = !isSignedIn },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isSignedIn) Color(0xFFFF5252) else Color(0xFF2962FF)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Column {
-                        Text("Fingerprint / PIN Lock", color = TextWhite, fontSize = 14.sp)
-                        Text("Require authentication on app launch", color = TextMuted, fontSize = 11.sp)
-                    }
-                    Switch(
-                        checked = isBiometricEnabled,
-                        onCheckedChange = { isBiometricEnabled = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = GoldPrimary)
+                    Text(
+                        text = if (isSignedIn) "Sign Out" else "Sign In with Google",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Data Backup Section
+        // App Information Card
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, BorderGlass, RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF16181E)),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Offline Database Management", color = GoldPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = { /* Export Backup */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceDark),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, BorderGlass, RoundedCornerShape(8.dp))
-                ) {
-                    Text("📥 Backup Database (JSON / SQLite)", color = TextWhite)
-                }
-
+                Text(
+                    text = "App Details",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { /* Restore Backup */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceDark),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, BorderGlass, RoundedCornerShape(8.dp))
-                ) {
-                    Text("📤 Restore Database Backup", color = TextWhite)
-                }
+                Text(text = "App: Institutional Orderflow Trading Journal", color = Color.Gray, fontSize = 13.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Version: 1.0.7", color = Color.Gray, fontSize = 13.sp)
             }
         }
     }
 }
-
