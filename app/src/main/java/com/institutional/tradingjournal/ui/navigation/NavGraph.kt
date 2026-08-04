@@ -10,7 +10,7 @@ import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
 import com.institutional.tradingjournal.ui.screens.MainDashboardScreen
 import com.institutional.tradingjournal.ui.screens.SettingsScreen
-import com.institutional.tradingjournal.ui.viewmodel.TradingViewModel
+import com.institutional.tradingjournal.viewmodel.TradingViewModel
 
 sealed class Screen(val route: String) {
     object Dashboard : Screen("dashboard")
