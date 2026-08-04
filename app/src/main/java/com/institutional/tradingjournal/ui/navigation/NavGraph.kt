@@ -1,75 +1,56 @@
 package com.institutional.tradingjournal.ui.navigation
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.institutional.tradingjournal.ui.components.BottomNavItem
-import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
-import com.institutional.tradingjournal.ui.screens.*
-import com.institutional.tradingjournal.ui.viewmodel.StrategyViewModel
-import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
+import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
+import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
+import com.institutional.tradingjournal.ui.screens.MainDashboardScreen
+import com.institutional.tradingjournal.ui.screens.SettingsScreen
+import com.institutional.tradingjournal.ui.viewmodel.TradingViewModel
+
+sealed class Screen(val route: String) {
+    object Dashboard : Screen("dashboard")
+    object Journal : Screen("journal")
+    object Analytics : Screen("analytics")
+    object Settings : Screen("settings")
+}
 
 @Composable
-fun NavGraph() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: BottomNavItem.Dashboard.route
-
-    val tradeViewModel: TradeViewModel = hiltViewModel()
-    val strategyViewModel: StrategyViewModel = hiltViewModel()
-    var showNewTradeDialog by remember { mutableStateOf(false) }
-
-    Scaffold(
-        bottomBar = {
-            OrderflowBottomBar(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
+fun NavGraph(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    viewModel: TradingViewModel = viewModel()
+) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Dashboard.route,
+        modifier = modifier
+    ) {
+        composable(Screen.Dashboard.route) {
+            MainDashboardScreen(
+                onNavigateToJournal = { navController.navigate(Screen.Journal.route) },
+                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
+                viewModel = viewModel
             )
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Dashboard.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(BottomNavItem.Dashboard.route) {
-                DashboardScreen(
-                    viewModel = tradeViewModel,
-                    onOpenNewTrade = { showNewTradeDialog = true }
-                )
-            }
-            composable(BottomNavItem.Journal.route) {
-                JournalChecklistScreen()
-            }
-            composable(BottomNavItem.Calendar.route) {
-                CalendarAnalyticsScreens(viewModel = tradeViewModel, isCalendarView = true)
-            }
-            composable(BottomNavItem.Analytics.route) {
-                CalendarAnalyticsScreens(viewModel = tradeViewModel, isCalendarView = false)
-            }
-            composable(BottomNavItem.Settings.route) {
-                SettingsScreen()
-            }
+        composable(Screen.Journal.route) {
+            JournalChecklistScreen(
+                viewModel = viewModel,
+                onTradeSaved = { navController.navigate(Screen.Dashboard.route) }
+            )
         }
-
-        if (showNewTradeDialog) {
-            NewTradeDialog(
-                onDismiss = { showNewTradeDialog = false },
-                onSaveTrade = { trade ->
-                    tradeViewModel.addTrade(trade)
-                }
+        composable(Screen.Analytics.route) {
+            CalendarAnalyticsScreens(
+                viewModel = viewModel
+            )
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                viewModel = viewModel
             )
         }
     }
