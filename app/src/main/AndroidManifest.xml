@@ -4,9 +4,9 @@
     <application
         android:name=".OrderflowApp"
         android:allowBackup="true"
-        android:icon="@android:drawable/sym_def_app_icon"
+        android:icon="@drawable/ic_launcher_logo"
+        android:roundIcon="@drawable/ic_launcher_logo"
         android:label="ORDERFLOW"
-        android:roundIcon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         
@@ -22,4 +22,3 @@
     </application>
 
 </manifest>
-
