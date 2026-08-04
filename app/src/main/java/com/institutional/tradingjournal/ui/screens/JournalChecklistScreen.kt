@@ -14,23 +14,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.model.TradeEntry
-import com.institutional.tradingjournal.viewmodel.TradingViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun JournalChecklistScreen(
-    viewModel: TradingViewModel,
-    onTradeSaved: () -> Unit
+    onTradeSaved: () -> Unit = {}
 ) {
     var pair by remember { mutableStateOf("XAUUSD") }
     var type by remember { mutableStateOf("BUY") }
     var result by remember { mutableStateOf("WIN") }
-    var riskReward by remember { mutableStateOf("1:2") }
-    var score by remember { mutableStateOf("80%") }
-    var grade by remember { mutableStateOf("A") }
     var timeframe by remember { mutableStateOf("15M") }
     var notes by remember { mutableStateOf("") }
 
@@ -113,22 +104,7 @@ fun JournalChecklistScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = {
-                val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
-                val newTrade = TradeEntry(
-                    pair = pair,
-                    date = currentDate,
-                    type = type,
-                    result = result,
-                    riskReward = riskReward,
-                    score = score,
-                    grade = grade,
-                    notes = notes,
-                    timeframe = timeframe
-                )
-                viewModel.saveTrade(newTrade)
-                onTradeSaved()
-            },
+            onClick = { onTradeSaved() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -136,7 +112,7 @@ fun JournalChecklistScreen(
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
-                text = "SAVE TRADE & SYNC",
+                text = "SAVE TRADE",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
