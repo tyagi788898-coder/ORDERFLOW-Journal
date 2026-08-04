@@ -1,21 +1,18 @@
 package com.institutional.tradingjournal.ui.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
+import com.institutional.tradingjournal.ui.screens.MainDashboardScreen
 import com.institutional.tradingjournal.ui.screens.SettingsScreen
 
 sealed class Screen(val route: String, val title: String) {
@@ -77,28 +74,10 @@ fun NavGraph(
             modifier = modifier.padding(innerPadding)
         ) {
             composable(Screen.Dashboard.route) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFF0D0E12))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "ORDERFLOW TRADING DASHBOARD",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Welcome back, Neeraj bhai! Select Journal or Settings from bottom menu.",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
+                MainDashboardScreen(
+                    onNavigateToJournal = { navController.navigate(Screen.Journal.route) },
+                    onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) }
+                )
             }
             composable(Screen.Journal.route) {
                 JournalChecklistScreen(
