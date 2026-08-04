@@ -1,148 +1,82 @@
 package com.institutional.tradingjournal.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.ui.theme.*
-import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
-import java.text.SimpleDateFormat
-import java.util.*
+import com.institutional.tradingjournal.data.TradeEntry
+import com.institutional.tradingjournal.ui.viewmodel.TradingViewModel
 
 @Composable
 fun CalendarAnalyticsScreens(
-    viewModel: TradeViewModel,
-    isCalendarView: Boolean
+    viewModel: TradingViewModel
 ) {
-    val totalPnL by viewModel.totalPnL.collectAsState()
-    val winRate by viewModel.winRate.collectAsState()
-    val totalTradesCount by viewModel.totalTradesCount.collectAsState()
-    val allTrades by viewModel.allTrades.collectAsState()
-
-    val currentMonthYear = remember {
-        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
-    }
+    val trades by viewModel.allTrades.collectAsState(initial = emptyList())
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Color(0xFF0D0E12))
             .padding(16.dp)
     ) {
         Text(
-            text = if (isCalendarView) "TRADING CALENDAR HEATMAP" else "INSTITUTIONAL ANALYTICS",
-            color = GoldPrimary,
+            text = "Trading Calendar & Analytics",
+            color = Color.White,
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = if (isCalendarView) "Real-time PnL performance & daily breakdown" else "Win/Loss distributions & risk analytics",
-            color = TextMuted,
-            fontSize = 12.sp
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        if (isCalendarView) {
-            // Real Dynamic Calendar Heatmap Grid
-            Text(currentMonthYear, color = TextWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            val calendar = Calendar.getInstance()
-            val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-            // Map trades by day of current month
-            val dayTradeMap = remember(allTrades) {
-                val map = mutableMapOf<Int, String>()
-                val sdfDay = SimpleDateFormat("d", Locale.getDefault())
-                val sdfMonth = SimpleDateFormat("M", Locale.getDefault())
-                val currentM = calendar.get(Calendar.MONTH) + 1
-
-                allTrades.forEach { trade ->
-                    val tradeCal = Calendar.getInstance().apply { timeInMillis = trade.date }
-                    val tradeM = tradeCal.get(Calendar.MONTH) + 1
-                    if (tradeM == currentM) {
-                        val dayNum = tradeCal.get(Calendar.DAY_OF_MONTH)
-                        map[dayNum] = trade.result
-                    }
-                }
-                map
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF16181E)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Total Logged Trades: ${trades.size}",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
             }
+        }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(7),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+        Text(
+            text = "Trade History",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        if (trades.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                items(daysInMonth) { index ->
-                    val dayNumber = index + 1
-                    val resultStatus = dayTradeMap[dayNumber]
-
-                    val isProfitDay = resultStatus == "WIN"
-                    val isLossDay = resultStatus == "LOSS"
-                    val isBreakevenDay = resultStatus == "BREAKEVEN"
-
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .background(
-                                when {
-                                    isProfitDay -> ProfitGreen.copy(alpha = 0.2f)
-                                    isLossDay -> LossRed.copy(alpha = 0.2f)
-                                    isBreakevenDay -> GoldPrimary.copy(alpha = 0.2f)
-                                    else -> SurfaceCard
-                                },
-                                RoundedCornerShape(8.dp)
-                            )
-                            .border(
-                                1.dp,
-                                when {
-                                    isProfitDay -> ProfitGreen
-                                    isLossDay -> LossRed
-                                    isBreakevenDay -> GoldPrimary
-                                    else -> BorderGlass
-                                },
-                                RoundedCornerShape(8.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$dayNumber", color = TextWhite, fontSize = 12.sp)
-                            when {
-                                isProfitDay -> Text("WIN", color = ProfitGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                isLossDay -> Text("LOSS", color = LossRed, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                isBreakevenDay -> Text("BE", color = GoldPrimary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
+                Text(
+                    text = "No trades logged yet",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
             }
         } else {
-            // Detailed Analytics Metrics
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, BorderGlass, RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Performance Summary", color = GoldPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    AnalyticsRow("Total Logged Trades", "$totalTradesCount")
-                    AnalyticsRow("Win Rate", "${String.format("%.1f", winRate)}%")
-                    AnalyticsRow("Net Cumulative PnL", "$${String.format("%.2f", totalPnL)}")
+                items(trades) { trade ->
+                    TradeHistoryCard(trade = trade)
                 }
             }
         }
@@ -150,14 +84,44 @@ fun CalendarAnalyticsScreens(
 }
 
 @Composable
-fun AnalyticsRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+fun TradeHistoryCard(trade: TradeEntry) {
+    val statusColor = when (trade.result.uppercase()) {
+        "WIN" -> Color(0xFF00E676)
+        "LOSS" -> Color(0xFFFF5252)
+        else -> Color(0xFFFFD600)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1C24)),
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Text(label, color = TextMuted, fontSize = 13.sp)
-        Text(value, color = TextWhite, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "${trade.pair} • ${trade.type}",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = trade.date,
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
+            Text(
+                text = trade.result,
+                color = statusColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
+        }
     }
 }
