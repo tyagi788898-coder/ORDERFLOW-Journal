@@ -130,21 +130,25 @@ fun StrategyCard(
             Text("Checklist Confluences (${items.size})", color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items.forEach { item ->
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFF222228), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                items.chunked(3).forEach { rowItems ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(text = "• $item", color = TextMuted, fontSize = 11.sp)
+                        rowItems.forEach { item ->
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFF222228), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(text = "• $item", color = TextMuted, fontSize = 11.sp)
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
-
