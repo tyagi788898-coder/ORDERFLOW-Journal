@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.data.TradeEntry
-import com.institutional.tradingjournal.ui.viewmodel.TradingViewModel
+import com.institutional.tradingjournal.model.TradeEntry
+import com.institutional.tradingjournal.viewmodel.TradingViewModel
 
 @Composable
 fun CalendarAnalyticsScreens(
