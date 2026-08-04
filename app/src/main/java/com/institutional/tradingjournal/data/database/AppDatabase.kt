@@ -2,6 +2,7 @@ package com.institutional.tradingjournal.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.institutional.tradingjournal.data.dao.StrategyDao
 import com.institutional.tradingjournal.data.dao.TradeDao
 import com.institutional.tradingjournal.data.entity.StrategyEntity
 import com.institutional.tradingjournal.data.entity.TradeEntity
@@ -13,5 +14,5 @@ import com.institutional.tradingjournal.data.entity.TradeEntity
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tradeDao(): TradeDao
+    abstract fun strategyDao(): StrategyDao
 }
-
