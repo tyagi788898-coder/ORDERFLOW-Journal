@@ -1,24 +1,28 @@
 package com.institutional.tradingjournal.ui.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
+import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
+import com.institutional.tradingjournal.ui.screens.SettingsScreen
 
-sealed class Screen(val route: String) {
-    object Dashboard : Screen("dashboard")
-    object Journal : Screen("journal")
-    object Analytics : Screen("analytics")
-    object Settings : Screen("settings")
+sealed class Screen(val route: String, val title: String) {
+    object Dashboard : Screen("dashboard", "Dashboard")
+    object Journal : Screen("journal", "Journal")
+    object Analytics : Screen("analytics", "Analytics")
+    object Settings : Screen("settings", "Settings")
 }
 
 @Composable
@@ -26,41 +30,86 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Dashboard.route,
-        modifier = modifier
-    ) {
-        composable(Screen.Dashboard.route) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
-                contentAlignment = Alignment.Center
+    val items = listOf(
+        Screen.Dashboard,
+        Screen.Journal,
+        Screen.Analytics,
+        Screen.Settings
+    )
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color(0xFF16181E),
+                contentColor = Color.White
             ) {
-                Text(text = "Orderflow Dashboard Ready", color = Color.White, fontSize = 18.sp)
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
+                items.forEach { screen ->
+                    NavigationBarItem(
+                        selected = currentRoute == screen.route,
+                        onClick = {
+                            if (currentRoute != screen.route) {
+                                navController.navigate(screen.route) {
+                                    popUpTo(Screen.Dashboard.route) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = screen.title,
+                                color = if (currentRoute == screen.route) Color(0xFF2962FF) else Color.Gray,
+                                fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        icon = {}
+                    )
+                }
             }
         }
-        composable(Screen.Journal.route) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Journal & Checklist", color = Color.White, fontSize = 18.sp)
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Dashboard.route,
+            modifier = modifier.padding(innerPadding)
+        ) {
+            composable(Screen.Dashboard.route) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF0D0E12))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "ORDERFLOW TRADING DASHBOARD",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Welcome back, Neeraj bhai! Select Journal or Settings from bottom menu.",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
             }
-        }
-        composable(Screen.Analytics.route) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Analytics Screen", color = Color.White, fontSize = 18.sp)
+            composable(Screen.Journal.route) {
+                JournalChecklistScreen(
+                    onTradeSaved = { navController.navigate(Screen.Dashboard.route) }
+                )
             }
-        }
-        composable(Screen.Settings.route) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Settings & Backup", color = Color.White, fontSize = 18.sp)
+            composable(Screen.Analytics.route) {
+                CalendarAnalyticsScreens()
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen()
             }
         }
     }
