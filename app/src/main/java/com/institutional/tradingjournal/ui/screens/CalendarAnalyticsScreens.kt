@@ -2,8 +2,6 @@ package com.institutional.tradingjournal.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,15 +11,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.model.TradeEntry
-import com.institutional.tradingjournal.viewmodel.TradingViewModel
 
 @Composable
-fun CalendarAnalyticsScreens(
-    viewModel: TradingViewModel
-) {
-    val trades by viewModel.allTrades.collectAsState(initial = emptyList())
-
+fun CalendarAnalyticsScreens() {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -45,81 +37,20 @@ fun CalendarAnalyticsScreens(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Total Logged Trades: ${trades.size}",
+                    text = "Total Logged Trades: 0",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
             }
         }
 
-        Text(
-            text = "Trade History",
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
-        if (trades.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No trades logged yet",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-            }
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(trades) { trade ->
-                    TradeHistoryCard(trade = trade)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TradeHistoryCard(trade: TradeEntry) {
-    val statusColor = when (trade.result.uppercase()) {
-        "WIN" -> Color(0xFF00E676)
-        "LOSS" -> Color(0xFFFF5252)
-        else -> Color(0xFFFFD600)
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1C24)),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Column {
-                Text(
-                    text = "${trade.pair} • ${trade.type}",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = trade.date,
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-            }
             Text(
-                text = trade.result,
-                color = statusColor,
-                fontWeight = FontWeight.Bold,
+                text = "No trades logged yet",
+                color = Color.Gray,
                 fontSize = 14.sp
             )
         }
