@@ -1,16 +1,18 @@
 package com.institutional.tradingjournal.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
-import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
-import com.institutional.tradingjournal.ui.screens.MainDashboardScreen
-import com.institutional.tradingjournal.ui.screens.SettingsScreen
-import com.institutional.tradingjournal.viewmodel.TradingViewModel
 
 sealed class Screen(val route: String) {
     object Dashboard : Screen("dashboard")
@@ -22,8 +24,7 @@ sealed class Screen(val route: String) {
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    modifier: Modifier = Modifier,
-    viewModel: TradingViewModel = viewModel()
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
@@ -31,27 +32,36 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Screen.Dashboard.route) {
-            MainDashboardScreen(
-                onNavigateToJournal = { navController.navigate(Screen.Journal.route) },
-                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
-                viewModel = viewModel
-            )
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Orderflow Dashboard Ready", color = Color.White, fontSize = 18.sp)
+            }
         }
         composable(Screen.Journal.route) {
-            JournalChecklistScreen(
-                viewModel = viewModel,
-                onTradeSaved = { navController.navigate(Screen.Dashboard.route) }
-            )
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Journal & Checklist", color = Color.White, fontSize = 18.sp)
+            }
         }
         composable(Screen.Analytics.route) {
-            CalendarAnalyticsScreens(
-                viewModel = viewModel
-            )
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Analytics Screen", color = Color.White, fontSize = 18.sp)
+            }
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                viewModel = viewModel
-            )
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color(0xFF0D0E12)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Settings & Backup", color = Color.White, fontSize = 18.sp)
+            }
         }
     }
 }
