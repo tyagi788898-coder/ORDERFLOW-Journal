@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.institutional.tradingjournal.ui.theme.*
 import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun CalendarAnalyticsScreens(
@@ -26,7 +28,12 @@ fun CalendarAnalyticsScreens(
 ) {
     val totalPnL by viewModel.totalPnL.collectAsState()
     val winRate by viewModel.winRate.collectAsState()
-    val totalTrades by viewModel.totalTradesCount.collectAsState()
+    val totalTradesCount by viewModel.totalTradesCount.collectAsState()
+    val allTrades by viewModel.allTrades.collectAsState()
+
+    val currentMonthYear = remember {
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
+    }
 
     Column(
         modifier = Modifier
@@ -41,7 +48,7 @@ fun CalendarAnalyticsScreens(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = if (isCalendarView) "Monthly PnL performance & daily breakdown" else "Win/Loss distributions & risk analytics",
+            text = if (isCalendarView) "Real-time PnL performance & daily breakdown" else "Win/Loss distributions & risk analytics",
             color = TextMuted,
             fontSize = 12.sp
         )
@@ -49,18 +56,43 @@ fun CalendarAnalyticsScreens(
         Spacer(modifier = Modifier.height(20.dp))
 
         if (isCalendarView) {
-            // Mock Calendar Heatmap Grid
-            Text("August 2026", color = TextWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            // Real Dynamic Calendar Heatmap Grid
+            Text(currentMonthYear, color = TextWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
+
+            val calendar = Calendar.getInstance()
+            val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+            // Map trades by day of current month
+            val dayTradeMap = remember(allTrades) {
+                val map = mutableMapOf<Int, String>()
+                val sdfDay = SimpleDateFormat("d", Locale.getDefault())
+                val sdfMonth = SimpleDateFormat("M", Locale.getDefault())
+                val currentM = calendar.get(Calendar.MONTH) + 1
+
+                allTrades.forEach { trade ->
+                    val tradeCal = Calendar.getInstance().apply { timeInMillis = trade.date }
+                    val tradeM = tradeCal.get(Calendar.MONTH) + 1
+                    if (tradeM == currentM) {
+                        val dayNum = tradeCal.get(Calendar.DAY_OF_MONTH)
+                        map[dayNum] = trade.result
+                    }
+                }
+                map
+            }
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(31) { day ->
-                    val isProfitDay = day % 3 == 0
-                    val isLossDay = day % 5 == 0 && !isProfitDay
+                items(daysInMonth) { index ->
+                    val dayNumber = index + 1
+                    val resultStatus = dayTradeMap[dayNumber]
+
+                    val isProfitDay = resultStatus == "WIN"
+                    val isLossDay = resultStatus == "LOSS"
+                    val isBreakevenDay = resultStatus == "BREAKEVEN"
 
                     Box(
                         modifier = Modifier
@@ -69,6 +101,7 @@ fun CalendarAnalyticsScreens(
                                 when {
                                     isProfitDay -> ProfitGreen.copy(alpha = 0.2f)
                                     isLossDay -> LossRed.copy(alpha = 0.2f)
+                                    isBreakevenDay -> GoldPrimary.copy(alpha = 0.2f)
                                     else -> SurfaceCard
                                 },
                                 RoundedCornerShape(8.dp)
@@ -78,6 +111,7 @@ fun CalendarAnalyticsScreens(
                                 when {
                                     isProfitDay -> ProfitGreen
                                     isLossDay -> LossRed
+                                    isBreakevenDay -> GoldPrimary
                                     else -> BorderGlass
                                 },
                                 RoundedCornerShape(8.dp)
@@ -85,9 +119,12 @@ fun CalendarAnalyticsScreens(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("${day + 1}", color = TextWhite, fontSize = 12.sp)
-                            if (isProfitDay) Text("+$250", color = ProfitGreen, fontSize = 9.sp)
-                            if (isLossDay) Text("-$100", color = LossRed, fontSize = 9.sp)
+                            Text("$dayNumber", color = TextWhite, fontSize = 12.sp)
+                            when {
+                                isProfitDay -> Text("WIN", color = ProfitGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                isLossDay -> Text("LOSS", color = LossRed, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                isBreakevenDay -> Text("BE", color = GoldPrimary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -103,12 +140,9 @@ fun CalendarAnalyticsScreens(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Performance Summary", color = GoldPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
+                    AnalyticsRow("Total Logged Trades", "$totalTradesCount")
                     AnalyticsRow("Win Rate", "${String.format("%.1f", winRate)}%")
-                    AnalyticsRow("Profit Factor", "2.45")
-                    AnalyticsRow("Average Risk Reward", "1:3.2")
-                    AnalyticsRow("Max Drawdown", "2.8%")
-                    AnalyticsRow("Best Session", "London")
-                    AnalyticsRow("Most Profitable Pair", "XAUUSD")
+                    AnalyticsRow("Net Cumulative PnL", "$${String.format("%.2f", totalPnL)}")
                 }
             }
         }
@@ -127,4 +161,3 @@ fun AnalyticsRow(label: String, value: String) {
         Text(value, color = TextWhite, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
-
