@@ -1,33 +1,54 @@
 package com.institutional.tradingjournal.ui.screens
 
+import android.app.DatePickerDialog
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.institutional.tradingjournal.data.entity.TradeEntity
 import com.institutional.tradingjournal.data.repository.DefaultStrategies
 import com.institutional.tradingjournal.ui.theme.*
+import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JournalChecklistScreen() {
-    var selectedStrategyIndex by remember { mutableStateOf(0) }
+fun JournalChecklistScreen(
+    viewModel: TradeViewModel
+) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+
+    // State Variables
+    var selectedDateText by remember { mutableStateOf(SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())) }
     var selectedPair by remember { mutableStateOf("XAUUSD") }
     var selectedSession by remember { mutableStateOf("Asian") }
-    var selectedResult by remember { mutableStateOf("No Trade") }
+    var selectedResult by remember { mutableStateOf("WIN") }
     var mistakeText by remember { mutableStateOf("") }
     var learningText by remember { mutableStateOf("") }
 
+    var showPairDialog by remember { mutableStateOf(false) }
+    var showHistorySheet by remember { mutableStateOf(false) }
+
+    var selectedStrategyIndex by remember { mutableStateOf(0) }
     val currentStrategy = DefaultStrategies.list.getOrElse(selectedStrategyIndex) { DefaultStrategies.list[0] }
     val checklistItems = remember(selectedStrategyIndex) { currentStrategy.checklistItems.split("|").filter { it.isNotBlank() } }
     val checkedStates = remember(selectedStrategyIndex) { mutableStateListOf(*Array(checklistItems.size) { false }) }
@@ -36,10 +57,28 @@ fun JournalChecklistScreen() {
     val progressFraction = if (checklistItems.isNotEmpty()) checkedCount.toFloat() / checklistItems.size.toFloat() else 0f
     val animatedProgress by animateFloatAsState(targetValue = progressFraction, label = "progress")
 
+    val tradesList by viewModel.allTrades.collectAsState()
+
+    // Pairs List
+    val majorPairs = listOf("XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD", "BTCUSD", "ETHUSD", "US30", "NAS100")
+
+    // DatePicker Dialog setup
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            val selCal = Calendar.getInstance()
+            selCal.set(year, month, dayOfMonth)
+            selectedDateText = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(selCal.time)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A)) // Dark Blue-Black Institutional Tone
+            .background(Color(0xFF0F172A))
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
@@ -48,31 +87,17 @@ fun JournalChecklistScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "📊 Institutional",
-                color = GoldPrimary,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Trading Journal PRO",
-                color = GoldPrimary,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
+            Text("📊 Institutional", color = GoldPrimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("Trading Journal PRO", color = GoldPrimary, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "⚡ Liquidity • Orderflow • Footprint • Heatmap • Volume Profile",
-                color = TextMuted,
-                fontSize = 11.sp
-            )
+            Text("⚡ Orderflow • Footprint • Heatmap • Volume Profile", color = TextMuted, fontSize = 11.sp)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
         Divider(color = GoldPrimary.copy(alpha = 0.5f), thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- TOP SELECTORS CARD ---
+        // --- SELECTORS CARD ---
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -85,11 +110,13 @@ fun JournalChecklistScreen() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Date Card
-                    SelectorBox(label = "📅 Date", value = "Today", modifier = Modifier.weight(1f))
-                    // Pair Card
+                    // Date Picker Box
+                    SelectorBox(label = "📅 Date", value = selectedDateText, modifier = Modifier.weight(1f)) {
+                        datePickerDialog.show()
+                    }
+                    // Pair Box with Dialog trigger
                     SelectorBox(label = "💱 Pair", value = selectedPair, modifier = Modifier.weight(1f)) {
-                        selectedPair = if (selectedPair == "XAUUSD") "EURUSD" else "XAUUSD"
+                        showPairDialog = true
                     }
                 }
 
@@ -99,7 +126,7 @@ fun JournalChecklistScreen() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Session Card
+                    // Session Box
                     SelectorBox(label = "🕒 Session", value = selectedSession, modifier = Modifier.weight(1f)) {
                         selectedSession = when (selectedSession) {
                             "Asian" -> "London"
@@ -107,12 +134,12 @@ fun JournalChecklistScreen() {
                             else -> "Asian"
                         }
                     }
-                    // Result Card
+                    // Clean Result Box: WIN, LOSS, BREAKEVEN
                     SelectorBox(label = "🎯 Result", value = selectedResult, modifier = Modifier.weight(1f)) {
                         selectedResult = when (selectedResult) {
-                            "No Trade" -> "WIN (+3R)"
-                            "WIN (+3R)" -> "LOSS (-1R)"
-                            else -> "No Trade"
+                            "WIN" -> "LOSS"
+                            "LOSS" -> "BREAKEVEN"
+                            else -> "WIN"
                         }
                     }
                 }
@@ -121,24 +148,13 @@ fun JournalChecklistScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- STRATEGY TABS (2x2 GRID) ---
+        // --- STRATEGY TABS ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StrategyTabButton(
-                title = "⭐ Strategy 1",
-                isSelected = selectedStrategyIndex == 0,
-                selectedColor = Color(0xFF22C55E),
-                modifier = Modifier.weight(1f)
-            ) { selectedStrategyIndex = 0 }
-
-            StrategyTabButton(
-                title = "🎯 Strategy 2",
-                isSelected = selectedStrategyIndex == 1,
-                selectedColor = Color(0xFFEF4444),
-                modifier = Modifier.weight(1f)
-            ) { selectedStrategyIndex = 1 }
+            StrategyTabButton("⭐ Strategy 1", selectedStrategyIndex == 0, Color(0xFF22C55E), Modifier.weight(1f)) { selectedStrategyIndex = 0 }
+            StrategyTabButton("🎯 Strategy 2", selectedStrategyIndex == 1, Color(0xFFEF4444), Modifier.weight(1f)) { selectedStrategyIndex = 1 }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -147,24 +163,13 @@ fun JournalChecklistScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StrategyTabButton(
-                title = "🌏 Strategy 3",
-                isSelected = selectedStrategyIndex == 2,
-                selectedColor = Color(0xFF3B82F6),
-                modifier = Modifier.weight(1f)
-            ) { selectedStrategyIndex = 2 }
-
-            StrategyTabButton(
-                title = "🚀 Strategy 4",
-                isSelected = selectedStrategyIndex == 3,
-                selectedColor = Color(0xFFEC4899),
-                modifier = Modifier.weight(1f)
-            ) { selectedStrategyIndex = 3 }
+            StrategyTabButton("🌏 Strategy 3", selectedStrategyIndex == 2, Color(0xFF3B82F6), Modifier.weight(1f)) { selectedStrategyIndex = 2 }
+            StrategyTabButton("🚀 Strategy 4", selectedStrategyIndex == 3, Color(0xFFEC4899), Modifier.weight(1f)) { selectedStrategyIndex = 3 }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- CHECKLIST CARD WITH EMOJIS & PROGRESS BAR ---
+        // --- CHECKLIST & PROGRESS BAR ---
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -173,16 +178,9 @@ fun JournalChecklistScreen() {
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = currentStrategy.name,
-                    color = GoldPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
+                Text(currentStrategy.name, color = GoldPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Checkbox List
                 checklistItems.forEachIndexed { index, item ->
                     Row(
                         modifier = Modifier
@@ -194,24 +192,15 @@ fun JournalChecklistScreen() {
                         Checkbox(
                             checked = checkedStates.getOrElse(index) { false },
                             onCheckedChange = { checkedStates[index] = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = GoldPrimary,
-                                uncheckedColor = Color.White
-                            )
+                            colors = CheckboxDefaults.colors(checkedColor = GoldPrimary, uncheckedColor = Color.White)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = item,
-                            color = TextWhite,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text(item, color = TextWhite, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Progress Bar
                 LinearProgressIndicator(
                     progress = animatedProgress,
                     modifier = Modifier
@@ -222,18 +211,13 @@ fun JournalChecklistScreen() {
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "${(progressFraction * 100).toInt()}% Completed",
-                    color = TextMuted,
-                    fontSize = 12.sp
-                )
+                Text("${(progressFraction * 100).toInt()}% Confluences Matched", color = TextMuted, fontSize = 12.sp)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- TRADE REVIEW SECTION (MISTAKE & LEARNING) ---
+        // --- TRADE REVIEW SECTION ---
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -242,30 +226,7 @@ fun JournalChecklistScreen() {
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "📝 Trade Review",
-                        color = GoldPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Surface(
-                        color = Color(0xFF1E293B),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Text(
-                            text = "After Trade",
-                            color = TextMuted,
-                            fontSize = 10.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
+                Text("📝 Trade Review", color = GoldPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text("❌ Mistake", color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -275,10 +236,8 @@ fun JournalChecklistScreen() {
                     onValueChange = { mistakeText = it },
                     placeholder = { Text("What mistake was made?", color = TextMuted, fontSize = 12.sp) },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = GoldPrimary,
-                        unfocusedBorderColor = BorderGlass,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite
+                        focusedBorderColor = GoldPrimary, unfocusedBorderColor = BorderGlass,
+                        focusedTextColor = TextWhite, unfocusedTextColor = TextWhite
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -292,10 +251,8 @@ fun JournalChecklistScreen() {
                     onValueChange = { learningText = it },
                     placeholder = { Text("Key takeaways from this trade", color = TextMuted, fontSize = 12.sp) },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = GoldPrimary,
-                        unfocusedBorderColor = BorderGlass,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite
+                        focusedBorderColor = GoldPrimary, unfocusedBorderColor = BorderGlass,
+                        focusedTextColor = TextWhite, unfocusedTextColor = TextWhite
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -304,60 +261,141 @@ fun JournalChecklistScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // --- BOTTOM MOTIVATION BANNER ---
-        Box(
+        // --- ACTION BUTTONS: SAVE ENTRY & HISTORY ---
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = "🏆 Discipline > Prediction • Follow the Checklist, Not Emotions.",
-                color = TextMuted,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
-}
+            Button(
+                onClick = {
+                    val pnlValue = when(selectedResult) {
+                        "WIN" -> 300.0
+                        "LOSS" -> -100.0
+                        else -> 0.0
+                    }
+                    val newTrade = TradeEntity(
+                        date = System.currentTimeMillis(),
+                        pair = selectedPair,
+                        type = "BUY",
+                        session = selectedSession,
+                        strategyName = currentStrategy.name,
+                        result = selectedResult,
+                        pnl = pnlValue,
+                        riskReward = 3.0,
+                        score = (progressFraction * 100).toInt(),
+                        grade = if (progressFraction > 0.8) "A+" else "B",
+                        notes = "Mistake: $mistakeText | Learning: $learningText",
+                        emotion = "Calm",
+                        timeframe = "15m"
+                    )
+                    viewModel.addTrade(newTrade)
+                    mistakeText = ""
+                    learningText = ""
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("✅ LOG TRADE ENTRY", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
 
-@Composable
-fun SelectorBox(label: String, value: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
-    Box(
-        modifier = modifier
-            .background(Color(0xFF0F172A), RoundedCornerShape(8.dp))
-            .border(1.dp, BorderGlass, RoundedCornerShape(8.dp))
-            .clickable { onClick() }
-            .padding(10.dp)
-    ) {
-        Column {
-            Text(label, color = TextMuted, fontSize = 11.sp)
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(value, color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            IconButton(
+                onClick = { showHistorySheet = true },
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(SurfaceCard, RoundedCornerShape(12.dp))
+                    .border(1.dp, BorderGlass, RoundedCornerShape(12.dp))
+            ) {
+                Icon(Icons.Default.History, contentDescription = "History", tint = GoldPrimary)
+            }
         }
-    }
-}
 
-@Composable
-fun StrategyTabButton(
-    title: String,
-    isSelected: Boolean,
-    selectedColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) selectedColor else Color(0xFF1E293B)
-        ),
-        shape = RoundedCornerShape(10.dp)
-    ) {
-        Text(
-            text = title,
-            color = if (isSelected) Color.White else TextMuted,
-            fontWeight = FontWeight.Bold,
-            fontSize = 13.sp
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+
+    // --- PAIR SELECTION DIALOG ---
+    if (showPairDialog) {
+        AlertDialog(
+            onDismissRequest = { showPairDialog = false },
+            title = { Text("Select Instrument / Pair", color = GoldPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    majorPairs.forEach { pair ->
+                        Text(
+                            text = pair,
+                            color = TextWhite,
+                            fontSize = 16.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedPair = pair
+                                    showPairDialog = false
+                                }
+                                .padding(vertical = 10.dp)
+                        )
+                        Divider(color = BorderGlass)
+                    }
+                }
+            },
+            confirmButton = {},
+            containerColor = SurfaceDark
         )
     }
-}
 
+    // --- HISTORY BOTTOM SHEET ---
+    if (showHistorySheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showHistorySheet = false },
+            containerColor = SurfaceDark
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text("📜 TRADE HISTORY LOGS", color = GoldPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (tradesList.isEmpty()) {
+                    Text("No trades logged yet.", color = TextMuted, fontSize = 14.sp)
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(max = 400.dp)
+                    ) {
+                        items(tradesList) { trade ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("${trade.pair} • ${trade.session}", color = TextWhite, fontWeight = FontWeight.Bold)
+                                        Text(trade.strategyName, color = TextMuted, fontSize = 11.sp)
+                                    }
+                                    Text(
+                                        trade.result,
+                                        color = when(trade.result) {
+                                            "WIN" -> ProfitGreen
+                                            "LOSS" -> LossRed
+                                            else -> GoldPrimary
+                                        },
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
