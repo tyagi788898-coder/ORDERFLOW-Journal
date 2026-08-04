@@ -4,8 +4,8 @@
     <application
         android:name=".OrderflowApp"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher_logo"
-        android:roundIcon="@drawable/ic_launcher_logo"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:label="ORDERFLOW"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
