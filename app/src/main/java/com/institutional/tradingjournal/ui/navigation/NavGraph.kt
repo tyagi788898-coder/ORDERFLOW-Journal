@@ -17,8 +17,10 @@ import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
 import com.institutional.tradingjournal.ui.screens.MainDashboardScreen
 import com.institutional.tradingjournal.ui.screens.SettingsScreen
+import com.institutional.tradingjournal.ui.screens.SplashScreen
 
 sealed class Screen(val route: String, val title: String) {
+    object Splash : Screen("splash", "Splash")
     object Dashboard : Screen("dashboard", "Dashboard")
     object Journal : Screen("journal", "Journal")
     object Analytics : Screen("analytics", "History")
@@ -40,6 +42,10 @@ fun NavGraph(
         masterTradeList.addAll(loaded)
     }
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val showBottomBar = currentRoute != Screen.Splash.route
+
     val items = listOf(
         Screen.Dashboard,
         Screen.Journal,
@@ -49,42 +55,50 @@ fun NavGraph(
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = if (isDarkTheme) Color(0xFF12141C) else Color.White,
-                contentColor = if (isDarkTheme) Color.White else Color.Black
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                items.forEach { screen ->
-                    NavigationBarItem(
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            if (currentRoute != screen.route) {
-                                navController.navigate(screen.route) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
+            if (showBottomBar) {
+                NavigationBar(
+                    containerColor = if (isDarkTheme) Color(0xFF12141C) else Color.White,
+                    contentColor = if (isDarkTheme) Color.White else Color.Black
+                ) {
+                    items.forEach { screen ->
+                        NavigationBarItem(
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
                                 }
-                            }
-                        },
-                        label = {
-                            Text(
-                                text = screen.title,
-                                color = if (currentRoute == screen.route) Color(0xFFFFC107) else Color.Gray,
-                                fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        icon = {}
-                    )
+                            },
+                            label = {
+                                Text(
+                                    text = screen.title,
+                                    color = if (currentRoute == screen.route) Color(0xFFFFC107) else Color.Gray,
+                                    fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            icon = {}
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Dashboard.route,
+            startDestination = Screen.Splash.route,
             modifier = modifier.padding(innerPadding)
         ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onLoadingComplete = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Screen.Dashboard.route) {
                 MainDashboardScreen(
                     tradeList = masterTradeList,
