@@ -35,63 +35,76 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
         onLoadingComplete()
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF090A0F)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Color(0xFF090A0F))
     ) {
-        // App Logo in Center
-        Image(
-            painter = painterResource(id = R.drawable.ic_launcher_logo),
-            contentDescription = "App Logo",
-            modifier = Modifier
-                .size(140.dp)
-                .clip(RoundedCornerShape(24.dp))
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Text(
-            text = "Institutional Orderflow",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "Trading Journal PRO",
-            color = Color(0xFFFFC107),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 36.dp)
-        )
-
-        // Loading Bar Area
+        // Center Content (Logo + Title + Loading)
         Column(
+            modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(220.dp)
+            verticalArrangement = Arrangement.Center
         ) {
-            LinearProgressIndicator(
-                progress = { animatedProgress },
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_logo),
+                contentDescription = "App Logo",
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = Color(0xFFFFC107),
-                trackColor = Color(0xFF1A1D28)
+                    .size(140.dp)
+                    .clip(RoundedCornerShape(24.dp))
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "${(animatedProgress * 100).toInt()}% Loading...",
-                color = Color.Gray,
-                fontSize = 12.sp,
+                text = "Institutional Orderflow",
+                color = Color.White,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
+
+            Text(
+                text = "Trading Journal PRO",
+                color = Color(0xFFFFC107),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 36.dp)
+            )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(220.dp)
+            ) {
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = Color(0xFFFFC107),
+                    trackColor = Color(0xFF1A1D28)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "${(animatedProgress * 100).toInt()}% Loading...",
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
+
+        // Bottom Watermark
+        Text(
+            text = "Made with Suraj & Neeraj Tyagi",
+            color = Color.Gray.copy(alpha = 0.6f),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
+        )
     }
 }
-
