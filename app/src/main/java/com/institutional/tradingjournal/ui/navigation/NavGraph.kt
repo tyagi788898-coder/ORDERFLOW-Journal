@@ -32,6 +32,7 @@ fun NavGraph(
 ) {
     val context = LocalContext.current
     val masterTradeList = remember { mutableStateListOf<TradeEntry>() }
+    var isDarkTheme by remember { mutableStateOf(TradeStorage.isDarkMode(context)) }
 
     LaunchedEffect(Unit) {
         val loaded = TradeStorage.loadTrades(context)
@@ -49,8 +50,8 @@ fun NavGraph(
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = Color(0xFF12141C),
-                contentColor = Color.White
+                containerColor = if (isDarkTheme) Color(0xFF12141C) else Color.White,
+                contentColor = if (isDarkTheme) Color.White else Color.Black
             ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -61,7 +62,7 @@ fun NavGraph(
                         onClick = {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
-                                    popUpTo(Screen.Dashboard.route) { saveState = true }
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -88,11 +89,13 @@ fun NavGraph(
             composable(Screen.Dashboard.route) {
                 MainDashboardScreen(
                     tradeList = masterTradeList,
+                    isDark = isDarkTheme,
                     onNavigateToJournal = { navController.navigate(Screen.Journal.route) }
                 )
             }
             composable(Screen.Journal.route) {
                 JournalChecklistScreen(
+                    isDark = isDarkTheme,
                     onTradeLogged = { newTrade ->
                         masterTradeList.add(0, newTrade)
                         TradeStorage.saveTrades(context, masterTradeList)
@@ -103,17 +106,25 @@ fun NavGraph(
             composable(Screen.Analytics.route) {
                 CalendarAnalyticsScreens(
                     tradeList = masterTradeList,
-                    onStatusUpdate = { tradeToUpdate, newStatus ->
+                    isDark = isDarkTheme,
+                    onStatusUpdate = { tradeToUpdate, newStatus, pnlAmount ->
                         val index = masterTradeList.indexOfFirst { it.id == tradeToUpdate.id }
                         if (index != -1) {
-                            masterTradeList[index] = masterTradeList[index].copy(result = newStatus)
+                            masterTradeList[index] = masterTradeList[index].copy(result = newStatus, pnlAmount = pnlAmount)
                             TradeStorage.saveTrades(context, masterTradeList)
                         }
                     }
                 )
             }
             composable(Screen.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(
+                    isDark = isDarkTheme,
+                    tradeList = masterTradeList,
+                    onThemeToggle = { newTheme ->
+                        isDarkTheme = newTheme
+                        TradeStorage.saveTheme(context, newTheme)
+                    }
+                )
             }
         }
     }
