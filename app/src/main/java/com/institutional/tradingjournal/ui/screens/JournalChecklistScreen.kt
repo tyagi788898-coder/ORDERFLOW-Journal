@@ -54,7 +54,6 @@ fun JournalChecklistScreen(
         "🚀 Strategy 4 – London Over-Speed Expansion"
     )
 
-    // Updated Checklists with "SL Placed" and "All 4 Conditions YES" removed
     val checklistsPerStrategy = listOf(
         listOf(
             "📍 Price at VAL / VAH or Virgin POC",
@@ -339,6 +338,49 @@ fun JournalChecklistScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
+        }
+    }
+}
+
+@Composable
+fun SelectorBox(
+    label: String,
+    value: String,
+    options: List<String>,
+    onSelect: (String) -> Unit,
+    cardBg: Color,
+    inputBg: Color,
+    textColor: Color,
+    subTextColor: Color,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+        Text(text = label, color = subTextColor, fontSize = 11.sp, modifier = Modifier.padding(bottom = 2.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(inputBg, RoundedCornerShape(6.dp))
+                .clickable { expanded = true }
+                .padding(10.dp)
+        ) {
+            Text(text = value, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(cardBg)
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(text = option, color = textColor) },
+                        onClick = {
+                            onSelect(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
