@@ -15,34 +15,41 @@ import com.institutional.tradingjournal.model.TradeEntry
 @Composable
 fun MainDashboardScreen(
     tradeList: List<TradeEntry>,
+    isDark: Boolean,
     onNavigateToJournal: () -> Unit = {}
 ) {
+    val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
+    val cardBgColor = if (isDark) Color(0xFF12141C) else Color.White
+    val textColor = if (isDark) Color.White else Color(0xFF12141C)
+    val subTextColor = if (isDark) Color.Gray else Color(0xFF555555)
+
     val totalTrades = tradeList.size
     val wins = tradeList.count { it.result.uppercase() == "WIN" }
     val losses = tradeList.count { it.result.uppercase() == "LOSS" }
-    
+
     val winRate = if (totalTrades > 0) (wins * 100) / totalTrades else 0
-    val profitFactor = if (losses > 0) String.format("%.2f", wins.toDouble() / losses) else if (wins > 0) "MAX" else "0.0"
-    
-    // Calculated net metric estimation
-    val netPnL = (wins * 300) - (losses * 100)
-    val pnlString = if (netPnL >= 0) "+$$netPnL" else "-$${kotlin.math.abs(netPnL)}"
+    val totalProfit = tradeList.filter { it.pnlAmount > 0 }.sumOf { it.pnlAmount }
+    val totalLoss = tradeList.filter { it.pnlAmount < 0 }.sumOf { kotlin.math.abs(it.pnlAmount) }
+
+    val profitFactor = if (totalLoss > 0) String.format("%.2f", totalProfit / totalLoss) else if (totalProfit > 0) "MAX" else "0.00"
+    val netPnL = tradeList.sumOf { it.pnlAmount }
+    val pnlString = if (netPnL >= 0) "+$${String.format("%.2f", netPnL)}" else "-$${String.format("%.2f", kotlin.math.abs(netPnL))}"
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF090A0F))
+            .background(bgColor)
             .padding(16.dp)
     ) {
         Text(
             text = "Institutional Orderflow",
-            color = Color.White,
+            color = textColor,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = "Live Trading Performance & Metrics",
-            color = Color.Gray,
+            color = subTextColor,
             fontSize = 13.sp,
             modifier = Modifier.padding(bottom = 20.dp)
         )
@@ -51,8 +58,8 @@ fun MainDashboardScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MetricCard("Win Rate", "$winRate%", Color(0xFF00E676), Modifier.weight(1f))
-            MetricCard("Profit Factor", profitFactor, Color(0xFFFFC107), Modifier.weight(1f))
+            MetricCard("Win Rate", "$winRate%", Color(0xFF00E676), cardBgColor, subTextColor, Modifier.weight(1f))
+            MetricCard("Profit Factor", profitFactor, Color(0xFFFFC107), cardBgColor, subTextColor, Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -61,15 +68,15 @@ fun MainDashboardScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MetricCard("Total Trades", "$totalTrades", Color.White, Modifier.weight(1f))
-            MetricCard("Net PnL", pnlString, if (netPnL >= 0) Color(0xFF00E676) else Color(0xFFD32F2F), Modifier.weight(1f))
+            MetricCard("Total Trades", "$totalTrades", textColor, cardBgColor, subTextColor, Modifier.weight(1f))
+            MetricCard("Net PnL", pnlString, if (netPnL >= 0) Color(0xFF00E676) else Color(0xFFD32F2F), cardBgColor, subTextColor, Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(28.dp))
 
         Text(
             text = "Quick Actions",
-            color = Color.White,
+            color = textColor,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 12.dp)
@@ -89,14 +96,21 @@ fun MainDashboardScreen(
 }
 
 @Composable
-fun MetricCard(title: String, value: String, valueColor: Color, modifier: Modifier = Modifier) {
+fun MetricCard(
+    title: String,
+    value: String,
+    valueColor: Color,
+    cardBg: Color,
+    subTextColor: Color,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF12141C)),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = title, color = Color.Gray, fontSize = 12.sp)
+            Text(text = title, color = subTextColor, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = value, color = valueColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
