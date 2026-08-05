@@ -1,7 +1,6 @@
 package com.institutional.tradingjournal.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,41 +16,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.institutional.tradingjournal.model.TradeEntry
 
-val AnalyticsDarkBg = Color(0xFF090A0F)
-val AnalyticsCardBg = Color(0xFF12141C)
-val AnalyticsYellow = Color(0xFFFFC107)
-val AnalyticsRed = Color(0xFFD32F2F)
-val AnalyticsGreen = Color(0xFF00E676)
-
 @Composable
 fun CalendarAnalyticsScreens(
     tradeList: List<TradeEntry>,
-    onStatusUpdate: (TradeEntry, String) -> Unit
+    isDark: Boolean,
+    onStatusUpdate: (TradeEntry, String, Double) -> Unit
 ) {
+    val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
+    val cardBg = if (isDark) Color(0xFF12141C) else Color.White
+    val textColor = if (isDark) Color.White else Color(0xFF12141C)
+    val subTextColor = if (isDark) Color.Gray else Color(0xFF555555)
+
     var selectedTradeForUpdate by remember { mutableStateOf<TradeEntry?>(null) }
+    var inputPnlText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AnalyticsDarkBg)
+            .background(bgColor)
             .padding(16.dp)
     ) {
         Text(
             text = "📈 Orderflow Journal History",
-            color = AnalyticsYellow,
+            color = Color(0xFFFFC107),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Click any trade to update WIN / LOSS status",
-            color = Color.Gray,
+            text = "Click any trade to update WIN / LOSS & Profit Amount",
+            color = subTextColor,
             fontSize = 12.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Metrics Overview Card
         Card(
-            colors = CardDefaults.cardColors(containerColor = AnalyticsCardBg),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
@@ -60,14 +59,14 @@ fun CalendarAnalyticsScreens(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "Total Logged Trades", color = Color.Gray, fontSize = 11.sp)
-                    Text(text = "${tradeList.size}", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "Total Logged Trades", color = subTextColor, fontSize = 11.sp)
+                    Text(text = "${tradeList.size}", color = textColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Column {
-                    val wins = tradeList.count { it.result == "WIN" }
+                    val wins = tradeList.count { it.result.uppercase() == "WIN" }
                     val winRate = if (tradeList.isNotEmpty()) (wins * 100) / tradeList.size else 0
-                    Text(text = "Win Rate", color = Color.Gray, fontSize = 11.sp)
-                    Text(text = "$winRate%", color = AnalyticsGreen, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "Win Rate", color = subTextColor, fontSize = 11.sp)
+                    Text(text = "$winRate%", color = Color(0xFF00E676), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -79,37 +78,51 @@ fun CalendarAnalyticsScreens(
             ) {
                 Text(
                     text = "No trades logged yet.\nLog trades from Journal Tab!",
-                    color = Color.Gray,
+                    color = subTextColor,
                     fontSize = 14.sp
                 )
             }
         } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(tradeList) { trade ->
-                    TradeHistoryCard(trade = trade, onClick = { selectedTradeForUpdate = trade })
+                    TradeHistoryCard(trade = trade, cardBg = cardBg, textColor = textColor, subTextColor = subTextColor, onClick = {
+                        selectedTradeForUpdate = trade
+                        inputPnlText = trade.pnlAmount.toString()
+                    })
                 }
             }
         }
     }
 
-    // Interactive Status Update Dialog / Popup
     selectedTradeForUpdate?.let { trade ->
         AlertDialog(
             onDismissRequest = { selectedTradeForUpdate = null },
-            containerColor = AnalyticsCardBg,
+            containerColor = cardBg,
             title = {
                 Text(
                     text = "Update Result: ${trade.pair} (${trade.strategy})",
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Column {
-                    Text(text = "Select final outcome for this trade:", color = Color.Gray, fontSize = 12.sp)
+                    Text(text = "Enter PnL Amount ($):", color = subTextColor, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    OutlinedTextField(
+                        value = inputPnlText,
+                        onValueChange = { inputPnlText = it },
+                        placeholder = { Text("e.g. 150 or -50") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFFFC107),
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
@@ -118,10 +131,11 @@ fun CalendarAnalyticsScreens(
                     ) {
                         Button(
                             onClick = {
-                                onStatusUpdate(trade, "WIN")
+                                val amount = inputPnlText.toDoubleOrNull() ?: 0.0
+                                onStatusUpdate(trade, "WIN", amount)
                                 selectedTradeForUpdate = null
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = AnalyticsGreen),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E676)),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("WIN", color = Color.Black, fontWeight = FontWeight.Bold)
@@ -129,27 +143,15 @@ fun CalendarAnalyticsScreens(
 
                         Button(
                             onClick = {
-                                onStatusUpdate(trade, "LOSS")
+                                val amount = inputPnlText.toDoubleOrNull() ?: 0.0
+                                onStatusUpdate(trade, "LOSS", -kotlin.math.abs(amount))
                                 selectedTradeForUpdate = null
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = AnalyticsRed),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("LOSS", color = Color.White, fontWeight = FontWeight.Bold)
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            onStatusUpdate(trade, "BREAKEVEN")
-                            selectedTradeForUpdate = null
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("BREAKEVEN", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             },
@@ -159,20 +161,26 @@ fun CalendarAnalyticsScreens(
 }
 
 @Composable
-fun TradeHistoryCard(trade: TradeEntry, onClick: () -> Unit) {
+fun TradeHistoryCard(
+    trade: TradeEntry,
+    cardBg: Color,
+    textColor: Color,
+    subTextColor: Color,
+    onClick: () -> Unit
+) {
     val statusColor = when (trade.result.uppercase()) {
-        "WIN" -> AnalyticsGreen
-        "LOSS" -> AnalyticsRed
-        "BREAKEVEN" -> Color.Gray
-        else -> AnalyticsYellow
+        "WIN" -> Color(0xFF00E676)
+        "LOSS" -> Color(0xFFD32F2F)
+        else -> Color(0xFFFFC107)
     }
 
+    val pnlDisplay = if (trade.pnlAmount >= 0) "+$${String.format("%.2f", trade.pnlAmount)}" else "-$${String.format("%.2f", kotlin.math.abs(trade.pnlAmount))}"
+
     Card(
-        colors = CardDefaults.cardColors(containerColor = AnalyticsCardBg),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFF2A2E3D), RoundedCornerShape(10.dp))
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -182,18 +190,9 @@ fun TradeHistoryCard(trade: TradeEntry, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = trade.pair,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
+                    Text(text = trade.pair, color = textColor, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "•  ${trade.session}",
-                        color = Color.Gray,
-                        fontSize = 12.sp
-                    )
+                    Text(text = "• ${trade.session}", color = subTextColor, fontSize = 12.sp)
                 }
 
                 Surface(
@@ -201,7 +200,7 @@ fun TradeHistoryCard(trade: TradeEntry, onClick: () -> Unit) {
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = trade.result,
+                        text = "${trade.result} ($pnlDisplay)",
                         color = statusColor,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp,
@@ -216,17 +215,17 @@ fun TradeHistoryCard(trade: TradeEntry, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = trade.strategy, color = AnalyticsYellow, fontSize = 12.sp)
-                Text(text = "Score: ${trade.scorePercentage}%", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = trade.strategy, color = Color(0xFFFFC107), fontSize = 12.sp)
+                Text(text = "Score: ${trade.scorePercentage}%", color = textColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
 
             if (trade.mistake.isNotBlank() || trade.learning.isNotBlank()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 if (trade.mistake.isNotBlank()) {
-                    Text(text = "❌ ${trade.mistake}", color = AnalyticsRed, fontSize = 11.sp)
+                    Text(text = "❌ ${trade.mistake}", color = Color(0xFFD32F2F), fontSize = 11.sp)
                 }
                 if (trade.learning.isNotBlank()) {
-                    Text(text = "💡 ${trade.learning}", color = AnalyticsYellow, fontSize = 11.sp)
+                    Text(text = "💡 ${trade.learning}", color = Color(0xFFFFC107), fontSize = 11.sp)
                 }
             }
         }
