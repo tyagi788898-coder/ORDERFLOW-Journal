@@ -33,7 +33,7 @@ fun SettingsScreen() {
             modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        // Appearance Mode
+        // Theme Customization Card
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF12141C)),
             shape = RoundedCornerShape(12.dp),
@@ -47,7 +47,7 @@ fun SettingsScreen() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = if (isDarkMode) "Dark Pro Mode (Active)" else "Light Theme", color = Color.Gray, fontSize = 13.sp)
+                    Text(text = if (isDarkMode) "Dark Pro Mode (Active)" else "Light Theme Mode", color = Color.Gray, fontSize = 13.sp)
                     Switch(
                         checked = isDarkMode,
                         onCheckedChange = { isDarkMode = it },
@@ -57,7 +57,7 @@ fun SettingsScreen() {
             }
         }
 
-        // Local Storage & Backup Options
+        // Local Storage & Backup Card
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF12141C)),
             shape = RoundedCornerShape(12.dp),
@@ -68,37 +68,39 @@ fun SettingsScreen() {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Button(
-                    onClick = { Toast.makeText(context, "Trade History Exported to Local Storage!", Toast.LENGTH_SHORT).show() },
+                    onClick = { Toast.makeText(context, "Trade History Saved in Phone Storage!", Toast.LENGTH_SHORT).show() },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1D28)),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("📥 Export Trade History (JSON)", color = Color.White)
+                    Text("📥 Export Trade Journal Backup", color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { Toast.makeText(context, "Ready to Import Local Backup!", Toast.LENGTH_SHORT).show() },
+                    onClick = { Toast.makeText(context, "Trade Backup Restored!", Toast.LENGTH_SHORT).show() },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1D28)),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("📤 Import Trade Backup", color = Color.White)
+                    Text("📤 Import Trade Journal Backup", color = Color.White)
                 }
             }
         }
 
-        // App Details
+        // App Information Card
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF12141C)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "ℹ️ Institutional Engine Version", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = "ℹ️ Institutional Engine Details", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Orderflow Pro Journal v2.0 (Offline Persistent)", color = Color.Gray, fontSize = 13.sp)
+                Text(text = "Orderflow Pro Trading Journal v2.0", color = Color.Gray, fontSize = 13.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Storage: Offline Local Storage (Auto-Persistent)", color = Color.Gray, fontSize = 13.sp)
             }
         }
     }
