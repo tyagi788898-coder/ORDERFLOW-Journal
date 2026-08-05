@@ -62,9 +62,8 @@ fun NavGraph(
                         onClick = {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    popUpTo(0) { inclusive = true }
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         },
@@ -90,7 +89,12 @@ fun NavGraph(
                 MainDashboardScreen(
                     tradeList = masterTradeList,
                     isDark = isDarkTheme,
-                    onNavigateToJournal = { navController.navigate(Screen.Journal.route) }
+                    onNavigateToJournal = {
+                        navController.navigate(Screen.Journal.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
             composable(Screen.Journal.route) {
@@ -99,7 +103,10 @@ fun NavGraph(
                     onTradeLogged = { newTrade ->
                         masterTradeList.add(0, newTrade)
                         TradeStorage.saveTrades(context, masterTradeList)
-                        navController.navigate(Screen.Analytics.route)
+                        navController.navigate(Screen.Analytics.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
