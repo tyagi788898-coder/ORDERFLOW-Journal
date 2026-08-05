@@ -5,11 +5,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.institutional.tradingjournal.TradeStorage
 import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
@@ -28,7 +30,14 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val masterTradeList = remember { mutableStateListOf<TradeEntry>() }
+
+    LaunchedEffect(Unit) {
+        val loaded = TradeStorage.loadTrades(context)
+        masterTradeList.clear()
+        masterTradeList.addAll(loaded)
+    }
 
     val items = listOf(
         Screen.Dashboard,
@@ -78,14 +87,15 @@ fun NavGraph(
         ) {
             composable(Screen.Dashboard.route) {
                 MainDashboardScreen(
-                    onNavigateToJournal = { navController.navigate(Screen.Journal.route) },
-                    onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) }
+                    tradeList = masterTradeList,
+                    onNavigateToJournal = { navController.navigate(Screen.Journal.route) }
                 )
             }
             composable(Screen.Journal.route) {
                 JournalChecklistScreen(
                     onTradeLogged = { newTrade ->
                         masterTradeList.add(0, newTrade)
+                        TradeStorage.saveTrades(context, masterTradeList)
                         navController.navigate(Screen.Analytics.route)
                     }
                 )
@@ -97,6 +107,7 @@ fun NavGraph(
                         val index = masterTradeList.indexOfFirst { it.id == tradeToUpdate.id }
                         if (index != -1) {
                             masterTradeList[index] = masterTradeList[index].copy(result = newStatus)
+                            TradeStorage.saveTrades(context, masterTradeList)
                         }
                     }
                 )
