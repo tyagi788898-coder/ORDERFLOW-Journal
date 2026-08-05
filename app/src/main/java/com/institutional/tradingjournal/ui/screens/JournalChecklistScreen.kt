@@ -1,5 +1,6 @@
 package com.institutional.tradingjournal.ui.screens
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,35 +13,56 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.institutional.tradingjournal.model.TradeEntry
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-// Theme Colors: Black, Dark Red, Golden Yellow
 val DarkBg = Color(0xFF090A0F)
 val CardBg = Color(0xFF12141C)
 val InputBg = Color(0xFF1A1D28)
 val PrimaryYellow = Color(0xFFFFC107)
 val AccentRed = Color(0xFFD32F2F)
-val SoftGreen = Color(0xFF00E676)
 
 @Composable
 fun JournalChecklistScreen(
     onTradeLogged: (TradeEntry) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    
+    var selectedDateText by remember { mutableStateOf(SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())) }
     var pair by remember { mutableStateOf("XAUUSD") }
     var session by remember { mutableStateOf("London") }
     var resultStatus by remember { mutableStateOf("PENDING") }
-    var selectedStrategy by remember { mutableStateOf(1) }
+    var selectedStrategyIndex by remember { mutableStateOf(0) }
 
     var mistakeText by remember { mutableStateOf("") }
     var learningText by remember { mutableStateOf("") }
 
-    // Strategy 1 Checkbox States (Orderflow / Heatmap / Delta)
+    val strategyNames = listOf(
+        "STRATEGY 1: THE LIQUIDITY CLUSTER COUNTER-ATTACK (5-STAR SOVEREIGN)",
+        "STRATEGY 2: THE ALL-WEATHER SNIPER FRAMEWORK (HIGH CONFIRMATION SCALPER)",
+        "STRATEGY 3: THE ASIAN RANGE REJECTION (4-STAR REVERSAL)",
+        "STRATEGY 4: THE LONDON OVER-SPEED EXPANSION (4-STAR MOMENTUM)"
+    )
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            calendar.set(year, month, dayOfMonth)
+            selectedDateText = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(calendar.time)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
     val checklistItems = remember {
         mutableStateListOf(
             "📍 Price at VAL / VAH or Virgin POC",
@@ -68,11 +90,10 @@ fun JournalChecklistScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        // Header Title
         Text(
             text = "📊 Institutional Trading Journal PRO",
             color = PrimaryYellow,
-            fontSize = 20.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
@@ -82,7 +103,6 @@ fun JournalChecklistScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Dropdowns Card (Pair, Session, Result)
         Card(
             colors = CardDefaults.cardColors(containerColor = CardBg),
             shape = RoundedCornerShape(12.dp),
@@ -90,7 +110,21 @@ fun JournalChecklistScreen(
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectorBox("📅 Date", SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date()), listOf("Today"), {}, Modifier.weight(1f))
+                    // Date Box with Calendar Trigger
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "📅 Date", color = Color.Gray, fontSize = 11.sp, modifier = Modifier.padding(bottom = 2.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(InputBg, RoundedCornerShape(6.dp))
+                                .border(1.dp, Color(0xFF2A2E3D), RoundedCornerShape(6.dp))
+                                .clickable { datePickerDialog.show() }
+                                .padding(10.dp)
+                        ) {
+                            Text(text = selectedDateText, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     SelectorBox("💱 Pair", pair, listOf("XAUUSD", "EURUSD", "US30", "BTCUSD"), { pair = it }, Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -101,22 +135,21 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Strategy Selector Buttons
+        // Strategy Selector Tabs
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            listOf("⭐ Strategy 1", "🎯 Strategy 2", "🌍 Strategy 3", "🚀 Strategy 4").forEachIndexed { index, title ->
-                val stratNum = index + 1
-                val isSelected = selectedStrategy == stratNum
+            listOf("Strategy 1", "Strategy 2", "Strategy 3", "Strategy 4").forEachIndexed { index, title ->
+                val isSelected = selectedStrategyIndex == index
                 Button(
-                    onClick = { selectedStrategy = stratNum },
-                    modifier = Modifier.weight(1f).height(40.dp),
+                    onClick = { selectedStrategyIndex = index },
+                    modifier = Modifier.weight(1f).height(38.dp),
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isSelected) AccentRed else InputBg
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = title,
@@ -128,7 +161,7 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Checklist Container
+        // Active Strategy Title Header
         Card(
             colors = CardDefaults.cardColors(containerColor = CardBg),
             shape = RoundedCornerShape(12.dp),
@@ -136,9 +169,9 @@ fun JournalChecklistScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "⭐ Strategy $selectedStrategy – Liquidity Cluster Counter Attack",
+                    text = strategyNames[selectedStrategyIndex],
                     color = PrimaryYellow,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
@@ -149,7 +182,7 @@ fun JournalChecklistScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { checkedStates[idx] = !checkedStates[idx] }
-                            .padding(vertical = 6.dp)
+                            .padding(vertical = 5.dp)
                     ) {
                         Checkbox(
                             checked = checkedStates[idx],
@@ -171,7 +204,6 @@ fun JournalChecklistScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Progress Bar
                 LinearProgressIndicator(
                     progress = { progressPercentage / 100f },
                     modifier = Modifier.fillMaxWidth().height(8.dp),
@@ -188,15 +220,15 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Trade Review Section (Mistake & Learning)
+        // Review Card
         Card(
             colors = CardDefaults.cardColors(containerColor = CardBg),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "📝 Trade Review", color = PrimaryYellow, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "📝 Trade Review", color = PrimaryYellow, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = mistakeText,
@@ -211,7 +243,7 @@ fun JournalChecklistScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = learningText,
@@ -228,15 +260,13 @@ fun JournalChecklistScreen(
             }
         }
 
-        // SAVE TRADE BUTTON
         Button(
             onClick = {
-                val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
                 val newEntry = TradeEntry(
-                    date = currentDate,
+                    date = selectedDateText,
                     pair = pair,
                     session = session,
-                    strategy = "Strategy $selectedStrategy",
+                    strategy = "Strat ${selectedStrategyIndex + 1}",
                     result = resultStatus,
                     scorePercentage = progressPercentage,
                     mistake = mistakeText,
@@ -244,7 +274,7 @@ fun JournalChecklistScreen(
                 )
                 onTradeLogged(newEntry)
             },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryYellow),
             shape = RoundedCornerShape(8.dp)
         ) {
@@ -252,7 +282,7 @@ fun JournalChecklistScreen(
                 text = "⚡ LOG TRADE TO JOURNAL HISTORY",
                 color = Color.Black,
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
         }
     }
