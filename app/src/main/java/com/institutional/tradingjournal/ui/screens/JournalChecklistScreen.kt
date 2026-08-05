@@ -3,7 +3,6 @@ package com.institutional.tradingjournal.ui.screens
 import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -55,7 +54,7 @@ fun JournalChecklistScreen(
         "🚀 Strategy 4 – London Over-Speed Expansion"
     )
 
-    // Strategy Unique Checklists
+    // Updated Checklists with "SL Placed" and "All 4 Conditions YES" removed
     val checklistsPerStrategy = listOf(
         listOf(
             "📍 Price at VAL / VAH or Virgin POC",
@@ -65,7 +64,7 @@ fun JournalChecklistScreen(
             "⚖️ 300%+ Diagonal Imbalance",
             "📈 Delta Reversal Confirmed",
             "🎯 Entry Executed",
-            "🛡️ SL Correct",
+            "🛡️ SL Placed",
             "🏁 TP (RR ≥ 1:3)"
         ),
         listOf(
@@ -73,9 +72,8 @@ fun JournalChecklistScreen(
             "🟨 Heatmap Wall Active",
             "🫧 Bubble Absorption",
             "🎿 Footprint Confirmation",
-            "✅ All 4 Conditions YES",
             "🎯 Entry Taken",
-            "🛡️ 2 Pip SL",
+            "🛡️ SL Placed",
             "🏁 TP (RR ≥ 1:3)"
         ),
         listOf(
@@ -85,7 +83,7 @@ fun JournalChecklistScreen(
             "↩️ Returned Inside Range",
             "🎿 Extreme Volume = 0",
             "🎯 Entry",
-            "🛡️ SL Correct",
+            "🛡️ SL Placed",
             "🏁 Target Opposite Range"
         ),
         listOf(
@@ -95,7 +93,7 @@ fun JournalChecklistScreen(
             "📍 Retest Completed",
             "🟢 Engulfing Trigger",
             "🎯 Entry",
-            "🛡️ SL Correct",
+            "🛡️ SL Placed",
             "🏁 TP (RR ≥ 1:3)"
         )
     )
@@ -172,7 +170,7 @@ fun JournalChecklistScreen(
                     value = pnlAmountText,
                     onValueChange = { pnlAmountText = it },
                     label = { Text("💵 Profit/Loss Amount ($)", color = Color(0xFFFFC107)) },
-                    placeholder = { Text("e.g. +250 or -100", color = subTextColor) },
+                    placeholder = { Text("e.g. 250 or -100", color = subTextColor) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFFFC107),
                         unfocusedBorderColor = inputBg,
@@ -316,13 +314,14 @@ fun JournalChecklistScreen(
         Button(
             onClick = {
                 val parsedPnl = pnlAmountText.toDoubleOrNull() ?: 0.0
+                val finalPnl = if (resultStatus.uppercase() == "LOSS") -kotlin.math.abs(parsedPnl) else kotlin.math.abs(parsedPnl)
                 val newEntry = TradeEntry(
                     date = selectedDateText,
                     pair = pair,
                     session = session,
                     strategy = "Strategy ${selectedStrategyIndex + 1}",
                     result = resultStatus,
-                    pnlAmount = parsedPnl,
+                    pnlAmount = finalPnl,
                     scorePercentage = progressPercentage,
                     mistake = mistakeText,
                     learning = learningText
@@ -343,47 +342,3 @@ fun JournalChecklistScreen(
         }
     }
 }
-
-@Composable
-fun SelectorBox(
-    label: String,
-    value: String,
-    options: List<String>,
-    onSelect: (String) -> Unit,
-    cardBg: Color,
-    inputBg: Color,
-    textColor: Color,
-    subTextColor: Color,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier) {
-        Text(text = label, color = subTextColor, fontSize = 11.sp, modifier = Modifier.padding(bottom = 2.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(inputBg, RoundedCornerShape(6.dp))
-                .clickable { expanded = true }
-                .padding(10.dp)
-        ) {
-            Text(text = value, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.background(cardBg)
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(text = option, color = textColor) },
-                        onClick = {
-                            onSelect(option)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
