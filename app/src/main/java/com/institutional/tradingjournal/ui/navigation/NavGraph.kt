@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
 import com.institutional.tradingjournal.ui.screens.MainDashboardScreen
@@ -18,7 +19,7 @@ import com.institutional.tradingjournal.ui.screens.SettingsScreen
 sealed class Screen(val route: String, val title: String) {
     object Dashboard : Screen("dashboard", "Dashboard")
     object Journal : Screen("journal", "Journal")
-    object Analytics : Screen("analytics", "Analytics")
+    object Analytics : Screen("analytics", "History")
     object Settings : Screen("settings", "Settings")
 }
 
@@ -27,6 +28,8 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val masterTradeList = remember { mutableStateListOf<TradeEntry>() }
+
     val items = listOf(
         Screen.Dashboard,
         Screen.Journal,
@@ -37,7 +40,7 @@ fun NavGraph(
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = Color(0xFF16181E),
+                containerColor = Color(0xFF12141C),
                 contentColor = Color.White
             ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -58,7 +61,7 @@ fun NavGraph(
                         label = {
                             Text(
                                 text = screen.title,
-                                color = if (currentRoute == screen.route) Color(0xFF2962FF) else Color.Gray,
+                                color = if (currentRoute == screen.route) Color(0xFFFFC107) else Color.Gray,
                                 fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Normal
                             )
                         },
@@ -81,11 +84,22 @@ fun NavGraph(
             }
             composable(Screen.Journal.route) {
                 JournalChecklistScreen(
-                    onTradeSaved = { navController.navigate(Screen.Dashboard.route) }
+                    onTradeLogged = { newTrade ->
+                        masterTradeList.add(0, newTrade)
+                        navController.navigate(Screen.Analytics.route)
+                    }
                 )
             }
             composable(Screen.Analytics.route) {
-                CalendarAnalyticsScreens()
+                CalendarAnalyticsScreens(
+                    tradeList = masterTradeList,
+                    onStatusUpdate = { tradeToUpdate, newStatus ->
+                        val index = masterTradeList.indexOfFirst { it.id == tradeToUpdate.id }
+                        if (index != -1) {
+                            masterTradeList[index] = masterTradeList[index].copy(result = newStatus)
+                        }
+                    }
+                )
             }
             composable(Screen.Settings.route) {
                 SettingsScreen()
