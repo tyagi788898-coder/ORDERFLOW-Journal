@@ -128,10 +128,15 @@ fun NavGraph(
                 CalendarAnalyticsScreens(
                     tradeList = masterTradeList,
                     isDark = isDarkTheme,
-                    onStatusUpdate = { tradeToUpdate, newStatus, pnlAmount ->
+                    onStatusUpdate = { tradeToUpdate, newStatus, pnlAmount, mistake, learning ->
                         val index = masterTradeList.indexOfFirst { it.id == tradeToUpdate.id }
                         if (index != -1) {
-                            masterTradeList[index] = masterTradeList[index].copy(result = newStatus, pnlAmount = pnlAmount)
+                            masterTradeList[index] = masterTradeList[index].copy(
+                                result = newStatus,
+                                pnlAmount = pnlAmount,
+                                mistake = mistake,
+                                learning = learning
+                            )
                             TradeStorage.saveTrades(context, masterTradeList)
                         }
                     }
