@@ -87,7 +87,7 @@ fun CalendarAnalyticsScreens(
                 items(tradeList) { trade ->
                     TradeHistoryCard(trade = trade, cardBg = cardBg, textColor = textColor, subTextColor = subTextColor, onClick = {
                         selectedTradeForUpdate = trade
-                        inputPnlText = trade.pnlAmount.toString()
+                        inputPnlText = kotlin.math.abs(trade.pnlAmount).toString()
                     })
                 }
             }
@@ -114,7 +114,7 @@ fun CalendarAnalyticsScreens(
                     OutlinedTextField(
                         value = inputPnlText,
                         onValueChange = { inputPnlText = it },
-                        placeholder = { Text("e.g. 150 or -50") },
+                        placeholder = { Text("e.g. 150 or 50") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFFFC107),
                             focusedTextColor = textColor,
@@ -131,7 +131,7 @@ fun CalendarAnalyticsScreens(
                     ) {
                         Button(
                             onClick = {
-                                val amount = inputPnlText.toDoubleOrNull() ?: 0.0
+                                val amount = kotlin.math.abs(inputPnlText.toDoubleOrNull() ?: 0.0)
                                 onStatusUpdate(trade, "WIN", amount)
                                 selectedTradeForUpdate = null
                             },
@@ -143,8 +143,8 @@ fun CalendarAnalyticsScreens(
 
                         Button(
                             onClick = {
-                                val amount = inputPnlText.toDoubleOrNull() ?: 0.0
-                                onStatusUpdate(trade, "LOSS", -kotlin.math.abs(amount))
+                                val amount = kotlin.math.abs(inputPnlText.toDoubleOrNull() ?: 0.0)
+                                onStatusUpdate(trade, "LOSS", -amount)
                                 selectedTradeForUpdate = null
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
@@ -157,77 +157,5 @@ fun CalendarAnalyticsScreens(
             },
             confirmButton = {}
         )
-    }
-}
-
-@Composable
-fun TradeHistoryCard(
-    trade: TradeEntry,
-    cardBg: Color,
-    textColor: Color,
-    subTextColor: Color,
-    onClick: () -> Unit
-) {
-    val statusColor = when (trade.result.uppercase()) {
-        "WIN" -> Color(0xFF00E676)
-        "LOSS" -> Color(0xFFD32F2F)
-        else -> Color(0xFFFFC107)
-    }
-
-    val pnlDisplay = if (trade.pnlAmount >= 0) "+$${String.format("%.2f", trade.pnlAmount)}" else "-$${String.format("%.2f", kotlin.math.abs(trade.pnlAmount))}"
-
-    Card(
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(10.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = trade.pair, color = textColor, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "• ${trade.session}", color = subTextColor, fontSize = 12.sp)
-                }
-
-                Surface(
-                    color = statusColor.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = "${trade.result} ($pnlDisplay)",
-                        color = statusColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = trade.strategy, color = Color(0xFFFFC107), fontSize = 12.sp)
-                Text(text = "Score: ${trade.scorePercentage}%", color = textColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            if (trade.mistake.isNotBlank() || trade.learning.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                if (trade.mistake.isNotBlank()) {
-                    Text(text = "❌ ${trade.mistake}", color = Color(0xFFD32F2F), fontSize = 11.sp)
-                }
-                if (trade.learning.isNotBlank()) {
-                    Text(text = "💡 ${trade.learning}", color = Color(0xFFFFC107), fontSize = 11.sp)
-                }
-            }
-        }
     }
 }
