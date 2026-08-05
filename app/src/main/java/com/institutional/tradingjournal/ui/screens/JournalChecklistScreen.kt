@@ -44,9 +44,6 @@ fun JournalChecklistScreen(
     var pnlAmountText by remember { mutableStateOf("") }
     var selectedStrategyIndex by remember { mutableStateOf(0) }
 
-    var mistakeText by remember { mutableStateOf("") }
-    var learningText by remember { mutableStateOf("") }
-
     val strategyNames = listOf(
         "⭐ Strategy 1 – Liquidity Cluster Counter Attack",
         "🎯 Strategy 2 – All Weather Sniper",
@@ -211,7 +208,7 @@ fun JournalChecklistScreen(
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -270,46 +267,6 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Trade Review Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = cardBg),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "📝 Trade Review", color = Color(0xFFFFC107), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = mistakeText,
-                    onValueChange = { mistakeText = it },
-                    label = { Text("❌ Mistake", color = Color(0xFFD32F2F)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFD32F2F),
-                        unfocusedBorderColor = inputBg,
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = learningText,
-                    onValueChange = { learningText = it },
-                    label = { Text("💡 Learning", color = Color(0xFFFFC107)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFFFC107),
-                        unfocusedBorderColor = inputBg,
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
         Button(
             onClick = {
                 val parsedPnl = pnlAmountText.toDoubleOrNull() ?: 0.0
@@ -321,9 +278,7 @@ fun JournalChecklistScreen(
                     strategy = "Strategy ${selectedStrategyIndex + 1}",
                     result = resultStatus,
                     pnlAmount = finalPnl,
-                    scorePercentage = progressPercentage,
-                    mistake = mistakeText,
-                    learning = learningText
+                    scorePercentage = progressPercentage
                 )
                 onTradeLogged(newEntry)
                 Toast.makeText(context, "Trade Logged Successfully!", Toast.LENGTH_SHORT).show()
@@ -338,49 +293,6 @@ fun JournalChecklistScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
-        }
-    }
-}
-
-@Composable
-fun SelectorBox(
-    label: String,
-    value: String,
-    options: List<String>,
-    onSelect: (String) -> Unit,
-    cardBg: Color,
-    inputBg: Color,
-    textColor: Color,
-    subTextColor: Color,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier) {
-        Text(text = label, color = subTextColor, fontSize = 11.sp, modifier = Modifier.padding(bottom = 2.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(inputBg, RoundedCornerShape(6.dp))
-                .clickable { expanded = true }
-                .padding(10.dp)
-        ) {
-            Text(text = value, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.background(cardBg)
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(text = option, color = textColor) },
-                        onClick = {
-                            onSelect(option)
-                            expanded = false
-                        }
-                    )
-                }
-            }
         }
     }
 }
