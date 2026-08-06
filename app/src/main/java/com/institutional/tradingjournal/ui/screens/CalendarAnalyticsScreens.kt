@@ -5,7 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,9 +50,9 @@ fun CalendarAnalyticsScreens(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Click any trade to update status/delete or view full checklist details",
+            text = "Click any trade to update WIN / LOSS, PnL & Review",
             color = subTextColor,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -100,9 +102,6 @@ fun CalendarAnalyticsScreens(
                             inputPnlText = kotlin.math.abs(trade.pnlAmount).toString()
                             inputMistake = trade.mistake
                             inputLearning = trade.learning
-                        },
-                        onViewDetails = {
-                            selectedTradeForDetails = trade
                         }
                     )
                 }
@@ -110,8 +109,10 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // UPDATE & DELETE DIALOG
+    // UPDATE RESULT, DETAILS & DELETE ALL-IN-ONE DIALOG
     selectedTradeForUpdate?.let { trade ->
+        val scrollState = rememberScrollState()
+
         AlertDialog(
             onDismissRequest = { selectedTradeForUpdate = null },
             containerColor = cardBg,
@@ -124,14 +125,18 @@ fun CalendarAnalyticsScreens(
                 )
             },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                ) {
                     Text(text = "Enter PnL Amount ($):", color = subTextColor, fontSize = 12.sp)
                     Spacer(modifier = Modifier.height(4.dp))
 
                     OutlinedTextField(
                         value = inputPnlText,
                         onValueChange = { inputPnlText = it },
-                        placeholder = { Text("e.g. 100") },
+                        placeholder = { Text("e.g. 500") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFFFC107),
                             focusedTextColor = textColor,
@@ -173,6 +178,7 @@ fun CalendarAnalyticsScreens(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // WIN / LOSS BUTTONS
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -202,18 +208,35 @@ fun CalendarAnalyticsScreens(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = Color(0xFF2A2E3D))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 1. FULL TRADE LOG / DETAILS BUTTON
+                    Button(
+                        onClick = {
+                            selectedTradeForDetails = trade
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1D28)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("🔍 CHECK FULL TRADE DETAILS", color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // DELETE TRADE BUTTON
+                    // 2. DELETE TRADE BUTTON
                     Button(
                         onClick = {
                             onDeleteTrade(trade)
                             selectedTradeForUpdate = null
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A0808)),
+                        shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("🗑️ Delete Trade Entry", color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("🗑️ DELETE TRADE ENTRY", color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             },
@@ -221,14 +244,14 @@ fun CalendarAnalyticsScreens(
         )
     }
 
-    // FULL DETAILS DIALOG
+    // FULL DETAILS SUB-DIALOG
     selectedTradeForDetails?.let { trade ->
         AlertDialog(
             onDismissRequest = { selectedTradeForDetails = null },
             containerColor = cardBg,
             title = {
                 Text(
-                    text = "📋 Full Trade Details",
+                    text = "📋 Full Trade Log Details",
                     color = Color(0xFFFFC107),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
@@ -286,8 +309,7 @@ fun TradeHistoryCard(
     cardBg: Color,
     textColor: Color,
     subTextColor: Color,
-    onClick: () -> Unit,
-    onViewDetails: () -> Unit
+    onClick: () -> Unit
 ) {
     val statusColor = when (trade.result.uppercase()) {
         "WIN" -> Color(0xFF00E676)
@@ -334,25 +356,22 @@ fun TradeHistoryCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = trade.strategy, color = Color(0xFFFFC107), fontSize = 12.sp)
-                
-                Surface(
-                    color = Color(0xFF1A1D28),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.clickable { onViewDetails() }
-                ) {
-                    Text(
-                        text = "🔍 Check Full Details",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                Text(text = "Score: ${trade.scorePercentage}%", color = textColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            if (trade.mistake.isNotBlank() || trade.learning.isNotBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                if (trade.mistake.isNotBlank()) {
+                    Text(text = "❌ ${trade.mistake}", color = Color(0xFFD32F2F), fontSize = 11.sp)
+                }
+                if (trade.learning.isNotBlank()) {
+                    Text(text = "💡 ${trade.learning}", color = Color(0xFFFFC107), fontSize = 11.sp)
                 }
             }
         }
     }
 }
+
