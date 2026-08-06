@@ -20,7 +20,8 @@ import com.institutional.tradingjournal.model.TradeEntry
 fun CalendarAnalyticsScreens(
     tradeList: List<TradeEntry>,
     isDark: Boolean,
-    onStatusUpdate: (TradeEntry, String, Double, String, String) -> Unit
+    onStatusUpdate: (TradeEntry, String, Double, String, String) -> Unit,
+    onDeleteTrade: (TradeEntry) -> Unit
 ) {
     val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
     val cardBg = if (isDark) Color(0xFF12141C) else Color.White
@@ -28,6 +29,8 @@ fun CalendarAnalyticsScreens(
     val subTextColor = if (isDark) Color.Gray else Color(0xFF555555)
 
     var selectedTradeForUpdate by remember { mutableStateOf<TradeEntry?>(null) }
+    var selectedTradeForDetails by remember { mutableStateOf<TradeEntry?>(null) }
+
     var inputPnlText by remember { mutableStateOf("") }
     var inputMistake by remember { mutableStateOf("") }
     var inputLearning by remember { mutableStateOf("") }
@@ -45,9 +48,9 @@ fun CalendarAnalyticsScreens(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Click any trade to update WIN / LOSS, PnL & Review",
+            text = "Click any trade to update status/delete or view full checklist details",
             color = subTextColor,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -87,17 +90,27 @@ fun CalendarAnalyticsScreens(
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(tradeList) { trade ->
-                    TradeHistoryCard(trade = trade, cardBg = cardBg, textColor = textColor, subTextColor = subTextColor, onClick = {
-                        selectedTradeForUpdate = trade
-                        inputPnlText = kotlin.math.abs(trade.pnlAmount).toString()
-                        inputMistake = trade.mistake
-                        inputLearning = trade.learning
-                    })
+                    TradeHistoryCard(
+                        trade = trade,
+                        cardBg = cardBg,
+                        textColor = textColor,
+                        subTextColor = subTextColor,
+                        onClick = {
+                            selectedTradeForUpdate = trade
+                            inputPnlText = kotlin.math.abs(trade.pnlAmount).toString()
+                            inputMistake = trade.mistake
+                            inputLearning = trade.learning
+                        },
+                        onViewDetails = {
+                            selectedTradeForDetails = trade
+                        }
+                    )
                 }
             }
         }
     }
 
+    // UPDATE & DELETE DIALOG
     selectedTradeForUpdate?.let { trade ->
         AlertDialog(
             onDismissRequest = { selectedTradeForUpdate = null },
@@ -188,10 +201,82 @@ fun CalendarAnalyticsScreens(
                             Text("LOSS", color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // DELETE TRADE BUTTON
+                    Button(
+                        onClick = {
+                            onDeleteTrade(trade)
+                            selectedTradeForUpdate = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A0808)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("🗑️ Delete Trade Entry", color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             },
             confirmButton = {}
         )
+    }
+
+    // FULL DETAILS DIALOG
+    selectedTradeForDetails?.let { trade ->
+        AlertDialog(
+            onDismissRequest = { selectedTradeForDetails = null },
+            containerColor = cardBg,
+            title = {
+                Text(
+                    text = "📋 Full Trade Details",
+                    color = Color(0xFFFFC107),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DetailRow("📅 Date:", trade.date, textColor, subTextColor)
+                    DetailRow("💱 Pair:", trade.pair, textColor, subTextColor)
+                    DetailRow("⏰ Session:", trade.session, textColor, subTextColor)
+                    DetailRow("🎯 Strategy:", trade.strategy, textColor, subTextColor)
+                    DetailRow("📊 Status:", trade.result, textColor, subTextColor)
+                    DetailRow("💵 PnL Amount:", if (trade.pnlAmount >= 0) "+$${trade.pnlAmount}" else "-$${kotlin.math.abs(trade.pnlAmount)}", textColor, subTextColor)
+                    DetailRow("✅ Checklist Score:", "${trade.scorePercentage}% Completed", textColor, subTextColor)
+
+                    if (trade.mistake.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "❌ Mistake:", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(text = trade.mistake, color = textColor, fontSize = 12.sp)
+                    }
+
+                    if (trade.learning.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "💡 Learning:", color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(text = trade.learning, color = textColor, fontSize = 12.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { selectedTradeForDetails = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
+                ) {
+                    Text("Close", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String, textColor: Color, subTextColor: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, color = subTextColor, fontSize = 12.sp)
+        Text(text = value, color = textColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
 }
 
@@ -201,7 +286,8 @@ fun TradeHistoryCard(
     cardBg: Color,
     textColor: Color,
     subTextColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onViewDetails: () -> Unit
 ) {
     val statusColor = when (trade.result.uppercase()) {
         "WIN" -> Color(0xFF00E676)
@@ -248,19 +334,23 @@ fun TradeHistoryCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = trade.strategy, color = Color(0xFFFFC107), fontSize = 12.sp)
-                Text(text = "Score: ${trade.scorePercentage}%", color = textColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            if (trade.mistake.isNotBlank() || trade.learning.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                if (trade.mistake.isNotBlank()) {
-                    Text(text = "❌ ${trade.mistake}", color = Color(0xFFD32F2F), fontSize = 11.sp)
-                }
-                if (trade.learning.isNotBlank()) {
-                    Text(text = "💡 ${trade.learning}", color = Color(0xFFFFC107), fontSize = 11.sp)
+                
+                Surface(
+                    color = Color(0xFF1A1D28),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.clickable { onViewDetails() }
+                ) {
+                    Text(
+                        text = "🔍 Check Full Details",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
             }
         }
