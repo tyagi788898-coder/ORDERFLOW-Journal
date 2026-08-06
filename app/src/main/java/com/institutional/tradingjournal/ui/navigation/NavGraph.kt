@@ -139,6 +139,10 @@ fun NavGraph(
                             )
                             TradeStorage.saveTrades(context, masterTradeList)
                         }
+                    },
+                    onDeleteTrade = { tradeToDelete ->
+                        masterTradeList.removeIf { it.id == tradeToDelete.id }
+                        TradeStorage.saveTrades(context, masterTradeList)
                     }
                 )
             }
@@ -155,3 +159,4 @@ fun NavGraph(
         }
     }
 }
+
