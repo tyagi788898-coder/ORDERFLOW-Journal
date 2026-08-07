@@ -44,54 +44,63 @@ fun JournalChecklistScreen(
     var pnlAmountText by remember { mutableStateOf("") }
     var selectedStrategyIndex by remember { mutableStateOf(0) }
 
-    val strategyNames = listOf(
-        "⭐ Strategy 1 – Liquidity Cluster Counter Attack",
-        "🎯 Strategy 2 – All Weather Sniper",
-        "🌏 Strategy 3 – Asian Range Rejection",
-        "🚀 Strategy 4 – London Over-Speed Expansion"
+    val strategyTitles = listOf(
+        "⭐ STRATEGY 1 — ASIAN RANGE ACCUMULATION",
+        "⚡ STRATEGY 2 — LONDON EXPANSION BREAKOUT",
+        "🛡️ STRATEGY 3 — ABSORPTION REVERSAL",
+        "👑 STRATEGY 4 — NY OVERLAP SOVEREIGN"
+    )
+
+    val strategySessions = listOf(
+        "Session: 05:00 – 11:30 IST",
+        "Session: 12:30 – 16:30 IST",
+        "Session: London Extension / NY Open",
+        "Session: 17:30 – 21:30 IST"
     )
 
     val checklistsPerStrategy = listOf(
         listOf(
-            "📍 Price at VAL / VAH or Virgin POC",
-            "🟨 Strong Heatmap Limit Order Wall",
-            "🫧 Huge Bubble + Price Freeze",
-            "🍌 Extreme BID/ASK = 0",
-            "⚖️ 300%+ Diagonal Imbalance",
-            "📈 Delta Reversal Confirmed",
-            "🎯 Entry Executed",
-            "🛡️ SL Placed",
-            "🏁 TP (RR ≥ 1:3)"
+            "📐 Range Boundary Setup : Asian VAH / VAL",
+            "📏 Profile Confirmation : D-Shape / Balanced Profile",
+            "🪤 Liquidity Trap : Fake Breakout of Range",
+            "👣 Auction Completion : Zero Bid / Ask",
+            "↩️ Re-Entry Confirmation : Candle Close Back Inside Range",
+            "📥 Entry Executed",
+            "🛡️ Stop Loss Placed"
         ),
         listOf(
-            "📊 SVP Level Present",
-            "🟨 Heatmap Wall Active",
-            "🫧 Bubble Absorption",
-            "🎿 Footprint Confirmation",
-            "🎯 Entry Taken",
-            "🛡️ SL Placed",
-            "🏁 TP (RR ≥ 1:3)"
+            "💥 Breakout Trigger : Asian Range / SVP Breakout",
+            "🚀 Momentum Confirmation : Strong Candle Velocity",
+            "📊 Orderflow Confirmation : Delta + Stacked Imbalance",
+            "✔️ Acceptance Confirmation : Breakout Hold Above/Below Level",
+            "🔄 Entry Trigger : Micro Retest + Engulfing",
+            "📥 Entry Executed",
+            "🛡️ Stop Loss Placed"
         ),
         listOf(
-            "📐 FRVP Drawn",
-            "📍 VAH / VAL Marked",
-            "🚨 False Break",
-            "↩️ Returned Inside Range",
-            "🎿 Extreme Volume = 0",
-            "🎯 Entry",
-            "🛡️ SL Placed",
-            "🏁 Target Opposite Range"
+            "🧱 Extreme Level : VAH / VAL / POC",
+            "🧊 Market Absorption : Iceberg / Big Bubble",
+            "👣 Auction Completion : Zero Bid / Ask",
+            "📉 Delta Confirmation : Weakness / Divergence",
+            "🔄 Reversal Trigger : Strong Reversal Candle Close",
+            "📥 Entry Executed",
+            "🛡️ Stop Loss Placed"
         ),
         listOf(
-            "💥 Asian Range Break",
-            "⚡ High Velocity Confirmed",
-            "🔄 Micro Pullback",
-            "📍 Retest Completed",
-            "🟢 Engulfing Trigger",
-            "🎯 Entry",
-            "🛡️ SL Placed",
-            "🏁 TP (RR ≥ 1:3)"
+            "📍 Structure Confirmation : FRVP POC Shift + Key Level",
+            "📊 Delta Alignment : Cumulative Delta Trend",
+            "🌊 Liquidity Confirmation : Heatmap Liquidity Vacuum",
+            "⚔️ Aggression Confirmation : 250%+ Diagonal Imbalance",
+            "📥 Entry Executed",
+            "🛡️ Stop Loss Placed"
         )
+    )
+
+    val slTpNotes = listOf(
+        Pair("🛑 SL : Asian Range High/Low ±2 Pips", "🎯 TP : Opposite Range / POC / VAH-VAL"),
+        Pair("🛑 SL : Swing High/Low ±3 Pips", "🎯 TP : Next LVN / Volume Gap"),
+        Pair("🛑 SL : Bubble High/Low ±2 Pips", "🎯 TP : POC → Mid VA → Opposite VA"),
+        Pair("🛑 SL : Bubble High/Low ±1.5 Pips", "🎯 TP : Next SVP Wall / HVN")
     )
 
     val currentChecklist = checklistsPerStrategy[selectedStrategyIndex]
@@ -178,7 +187,7 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Strategy Tabs
+        // Strategy Selector Tabs
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -204,7 +213,7 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Checklist Items
+        // Strategy Checklist Card
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
@@ -212,10 +221,15 @@ fun JournalChecklistScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = strategyNames[selectedStrategyIndex],
+                    text = strategyTitles[selectedStrategyIndex],
                     color = Color(0xFFFFC107),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "(${strategySessions[selectedStrategyIndex]})",
+                    color = subTextColor,
+                    fontSize = 11.sp,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
@@ -262,8 +276,33 @@ fun JournalChecklistScreen(
                     color = Color(0xFFFFC107),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
                 )
+
+                // Static SL & TP Parameters Note Box
+                val currentSlTp = slTpNotes[selectedStrategyIndex]
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(inputBg, RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = currentSlTp.first,
+                            color = Color(0xFFFF5252),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = currentSlTp.second,
+                            color = Color(0xFF00E676),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
