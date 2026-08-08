@@ -5,16 +5,41 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
 import com.institutional.tradingjournal.ui.navigation.OrderflowNavGraph
 import com.institutional.tradingjournal.ui.navigation.Screen
-import com.institutional.tradingjournal.ui.theme.InstitutionalTradingJournalTheme
 import com.institutional.tradingjournal.util.TradeStorage
+
+@Composable
+fun OrderflowJournalTheme(
+    darkTheme: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    val darkColors = darkColorScheme(
+        primary = Color(0xFFFFC107),
+        background = Color(0xFF090A0F),
+        surface = Color(0xFF12141C)
+    )
+    val lightColors = lightColorScheme(
+        primary = Color(0xFFFFC107),
+        background = Color(0xFFF4F6F9),
+        surface = Color.White
+    )
+
+    MaterialTheme(
+        colorScheme = if (darkTheme) darkColors else lightColors,
+        content = content
+    )
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 tradeList.addAll(TradeStorage.loadTrades(this@MainActivity))
             }
 
-            InstitutionalTradingJournalTheme(darkTheme = isDark) {
+            OrderflowJournalTheme(darkTheme = isDark) {
                 val navController = rememberNavController()
                 var currentRoute by remember { mutableStateOf(Screen.Splash.route) }
 
@@ -65,6 +90,13 @@ class MainActivity : ComponentActivity() {
                         onDeleteTrade = { tradeToDelete ->
                             tradeList.remove(tradeToDelete)
                             TradeStorage.saveTrades(this@MainActivity, tradeList)
+                        },
+                        onStatusUpdate = { updatedTrade ->
+                            val index = tradeList.indexOfFirst { it.date == updatedTrade.date && it.pair == updatedTrade.pair }
+                            if (index != -1) {
+                                tradeList[index] = updatedTrade
+                                TradeStorage.saveTrades(this@MainActivity, tradeList)
+                            }
                         },
                         modifier = Modifier.padding(innerPadding)
                     )
