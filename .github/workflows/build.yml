@@ -24,12 +24,32 @@ jobs:
         with:
           gradle-version: '8.5'
 
+      - name: Generate Fixed Key
+        run: |
+          keytool -genkey -v -keystore fixed_release.keystore \
+            -alias orderflow_key \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass Orderflow123 \
+            -keypass Orderflow123 \
+            -dname "CN=Orderflow, OU=Trading, O=Journal, L=City, S=State, C=IN"
+
       - name: Build APK
         run: gradle assembleDebug --no-daemon
 
-      - name: Upload APK Artifact
+      - name: Sign APK with Fixed Key
+        run: |
+          ANDROID_SDK_ROOT=$ANDROID_HOME
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_SDK_ROOT/build-tools/* | tail -n 1)
+          $BUILD_TOOLS_DIR/apksigner sign --ks fixed_release.keystore \
+            --ks-pass pass:Orderflow123 \
+            --ks-key-alias orderflow_key \
+            --key-pass pass:Orderflow123 \
+            --out app/build/outputs/apk/debug/app-debug-signed.apk \
+            app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
           name: ORDERFLOW-DEV-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          
+          path: app/build/outputs/apk/debug/app-debug-signed.apk
+
