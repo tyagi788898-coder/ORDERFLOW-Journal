@@ -1,11 +1,12 @@
 package com.institutional.tradingjournal.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.institutional.tradingjournal.model.TradeEntry
-import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreen
+import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
 import com.institutional.tradingjournal.ui.screens.DashboardScreen
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
 import com.institutional.tradingjournal.ui.screens.SettingsScreen
@@ -26,16 +27,17 @@ fun OrderflowNavGraph(
     onToggleTheme: (Boolean) -> Unit,
     tradeList: List<TradeEntry>,
     onTradeLogged: (TradeEntry) -> Unit,
-    onDeleteTrade: (TradeEntry) -> Unit
+    onDeleteTrade: (TradeEntry) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.Splash.route,
+        modifier = modifier
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
-                isDark = isDark,
-                onSplashFinished = {
+                onLoadingComplete = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
@@ -58,7 +60,7 @@ fun OrderflowNavGraph(
         }
 
         composable(Screen.History.route) {
-            CalendarAnalyticsScreen(
+            CalendarAnalyticsScreens(
                 isDark = isDark,
                 tradeList = tradeList,
                 onDeleteTrade = onDeleteTrade
