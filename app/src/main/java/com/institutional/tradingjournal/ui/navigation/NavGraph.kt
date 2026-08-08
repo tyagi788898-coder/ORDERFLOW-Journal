@@ -7,7 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
-import com.institutional.tradingjournal.ui.screens.DashboardScreen
+import com.institutional.tradingjournal.ui.screens.DashboardScreens
 import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
 import com.institutional.tradingjournal.ui.screens.SettingsScreen
 import com.institutional.tradingjournal.ui.screens.SplashScreen
@@ -47,7 +47,7 @@ fun OrderflowNavGraph(
         }
 
         composable(Screen.Dashboard.route) {
-            DashboardScreen(
+            DashboardScreens(
                 isDark = isDark,
                 tradeList = tradeList
             )
@@ -77,4 +77,3 @@ fun OrderflowNavGraph(
         }
     }
 }
-
