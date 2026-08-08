@@ -3,29 +3,74 @@ package com.institutional.tradingjournal
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
-import com.institutional.tradingjournal.ui.navigation.NavGraph
+import com.institutional.tradingjournal.model.TradeEntry
+import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
+import com.institutional.tradingjournal.ui.navigation.OrderflowNavGraph
+import com.institutional.tradingjournal.ui.navigation.Screen
+import com.institutional.tradingjournal.ui.theme.InstitutionalTradingJournalTheme
+import com.institutional.tradingjournal.util.TradeStorage
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Force window background programmatically to eliminate any white flash
-        window.decorView.setBackgroundColor(android.graphics.Color.parseColor("#090A0F"))
-        
         setContent {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF090A0F)) // Immediate Dark Layer
-            ) {
+            var isDark by remember { mutableStateOf(true) }
+            val tradeList = remember { mutableStateListOf<TradeEntry>() }
+
+            LaunchedEffect(Unit) {
+                tradeList.clear()
+                tradeList.addAll(TradeStorage.loadTrades(this@MainActivity))
+            }
+
+            InstitutionalTradingJournalTheme(darkTheme = isDark) {
                 val navController = rememberNavController()
-                NavGraph(navController = navController)
+                var currentRoute by remember { mutableStateOf(Screen.Splash.route) }
+
+                navController.addOnDestinationChangedListener { _, destination, _ ->
+                    currentRoute = destination.route ?: Screen.Splash.route
+                }
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        if (currentRoute != Screen.Splash.route) {
+                            OrderflowBottomBar(
+                                currentRoute = currentRoute,
+                                onNavigate = { route ->
+                                    navController.navigate(route) {
+                                        popUpTo(Screen.Dashboard.route) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+                    OrderflowNavGraph(
+                        navController = navController,
+                        isDark = isDark,
+                        onToggleTheme = { isDark = it },
+                        tradeList = tradeList,
+                        onTradeLogged = { newTrade ->
+                            tradeList.add(0, newTrade)
+                            TradeStorage.saveTrades(this@MainActivity, tradeList)
+                        },
+                        onDeleteTrade = { tradeToDelete ->
+                            tradeList.remove(tradeToDelete)
+                            TradeStorage.saveTrades(this@MainActivity, tradeList)
+                        },
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
         }
     }
 }
+
