@@ -324,7 +324,9 @@ fun JournalChecklistScreen(
                     }
                 }
             }
-        }        Card(
+        }
+
+        Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
@@ -349,18 +351,14 @@ fun JournalChecklistScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                checkedStates = checkedStates.toMutableList().also {
-                                    it[idx] = !it[idx]
-                                }
+                                checkedStates = checkedStates.toMutableList().also { it[idx] = !it[idx] }
                             }
                             .padding(vertical = 5.dp)
                     ) {
                         Checkbox(
                             checked = if (idx < checkedStates.size) checkedStates[idx] else false,
                             onCheckedChange = { checkedVal ->
-                                checkedStates = checkedStates.toMutableList().also {
-                                    it[idx] = checkedVal
-                                }
+                                checkedStates = checkedStates.toMutableList().also { it[idx] = checkedVal }
                             },
                             colors = CheckboxDefaults.colors(
                                 checkedColor = Color(0xFFFFC107),
@@ -385,7 +383,6 @@ fun JournalChecklistScreen(
                     color = Color(0xFFFFC107),
                     trackColor = inputBg,
                 )
-
                 Text(
                     text = "$progressPercentage% Completed",
                     color = Color(0xFFFFC107),
@@ -407,9 +404,7 @@ fun JournalChecklistScreen(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
-
                         Spacer(modifier = Modifier.height(4.dp))
-
                         Text(
                             text = currentStrategy.tpNote,
                             color = Color(0xFF00E676),
@@ -423,19 +418,8 @@ fun JournalChecklistScreen(
 
         Button(
             onClick = {
-                val numericVal = pnlAmountText
-                    .replace("+", "")
-                    .replace("-", "")
-                    .replace("$", "")
-                    .toDoubleOrNull() ?: 0.0
-
-                val finalPnl =
-                    if (pnlAmountText.startsWith("-")) {
-                        -kotlin.math.abs(numericVal)
-                    } else {
-                        kotlin.math.abs(numericVal)
-                    }
-
+                val numericVal = pnlAmountText.replace("+", "").replace("-", "").replace("$", "").toDoubleOrNull() ?: 0.0
+                val finalPnl = if (pnlAmountText.startsWith("-")) -kotlin.math.abs(numericVal) else kotlin.math.abs(numericVal)
                 val newEntry = TradeEntry(
                     date = selectedDateText,
                     pair = pair,
@@ -445,19 +429,11 @@ fun JournalChecklistScreen(
                     pnlAmount = finalPnl,
                     scorePercentage = progressPercentage
                 )
-
                 onTradeLogged(newEntry)
-
-                Toast.makeText(
-                    context,
-                    "Trade Logged Successfully!",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context, "Trade Logged Successfully!", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFFC107)
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107)),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
@@ -472,9 +448,7 @@ fun JournalChecklistScreen(
     // ADD NEW PAIR DIALOG
     if (showAddPairDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showAddPairDialog = false
-            },
+            onDismissRequest = { showAddPairDialog = false },
             containerColor = cardBg,
             title = {
                 Text(
@@ -486,22 +460,12 @@ fun JournalChecklistScreen(
             },
             text = {
                 Column {
-                    Text(
-                        text = "Enter Symbol / Pair Name:",
-                        color = subTextColor,
-                        fontSize = 12.sp
-                    )
-
+                    Text(text = "Enter Symbol / Pair Name:", color = subTextColor, fontSize = 12.sp)
                     Spacer(modifier = Modifier.height(6.dp))
-
                     OutlinedTextField(
                         value = newPairInput,
-                        onValueChange = {
-                            newPairInput = it.uppercase()
-                        },
-                        placeholder = {
-                            Text("e.g. GBPUSD or NAS100")
-                        },
+                        onValueChange = { newPairInput = it.uppercase() },
+                        placeholder = { Text("e.g. GBPUSD or NAS100") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFFFC107),
                             focusedTextColor = textColor,
@@ -515,33 +479,17 @@ fun JournalChecklistScreen(
                 Button(
                     onClick = {
                         val trimmed = newPairInput.trim().uppercase()
-
-                        if (
-                            trimmed.isNotBlank() &&
-                            !pairList.contains(trimmed)
-                        ) {
+                        if (trimmed.isNotBlank() && !pairList.contains(trimmed)) {
                             pairList.add(trimmed)
                             pair = trimmed
-
-                            Toast.makeText(
-                                context,
-                                "Pair '$trimmed' Added!",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(context, "Pair $trimmed Added!", Toast.LENGTH_SHORT).show()
                         }
-
                         newPairInput = ""
                         showAddPairDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFC107)
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
                 ) {
-                    Text(
-                        "ADD PAIR",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("ADD PAIR", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -550,24 +498,12 @@ fun JournalChecklistScreen(
     // WIN/LOSS PnL AMOUNT DIALOG
     if (showPnlDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showPnlDialog = false
-            },
+            onDismissRequest = { showPnlDialog = false },
             containerColor = cardBg,
             title = {
                 Text(
-                    text =
-                        if (targetStatusForDialog == "WIN")
-                            "🎉 Log WIN Amount"
-                        else
-                            "📉 Log LOSS Amount",
-
-                    color =
-                        if (targetStatusForDialog == "WIN")
-                            Color(0xFF00E676)
-                        else
-                            Color(0xFFD32F2F),
-
+                    text = if (targetStatusForDialog == "WIN") "🎉 Log WIN Amount" else "📉 Log LOSS Amount",
+                    color = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -579,24 +515,14 @@ fun JournalChecklistScreen(
                         color = subTextColor,
                         fontSize = 12.sp
                     )
-
                     Spacer(modifier = Modifier.height(6.dp))
 
                     OutlinedTextField(
                         value = tempPnlInput,
-                        onValueChange = {
-                            tempPnlInput = it
-                        },
-                        placeholder = {
-                            Text("e.g. 250")
-                        },
+                        onValueChange = { tempPnlInput = it },
+                        placeholder = { Text("e.g. 250") },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor =
-                                if (targetStatusForDialog == "WIN")
-                                    Color(0xFF00E676)
-                                else
-                                    Color(0xFFD32F2F),
-
+                            focusedBorderColor = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
                             focusedTextColor = textColor,
                             unfocusedTextColor = textColor
                         ),
@@ -607,30 +533,15 @@ fun JournalChecklistScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val absAmount =
-                            tempPnlInput.toDoubleOrNull() ?: 0.0
-
-                        pnlAmountText =
-                            if (targetStatusForDialog == "WIN")
-                                "+$$absAmount"
-                            else
-                                "-$$absAmount"
-
+                        val absAmount = tempPnlInput.toDoubleOrNull() ?: 0.0
+                        pnlAmountText = if (targetStatusForDialog == "WIN") "+$$absAmount" else "-$$absAmount"
                         showPnlDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (targetStatusForDialog == "WIN")
-                                Color(0xFF00E676)
-                            else
-                                Color(0xFFD32F2F)
+                        containerColor = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F)
                     )
                 ) {
-                    Text(
-                        "SAVE AMOUNT",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("SAVE AMOUNT", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -639,35 +550,15 @@ fun JournalChecklistScreen(
     // EDIT STRATEGY DIALOG
     editingStrategyIndex?.let { stratIdx ->
         val stratToEdit = strategies[stratIdx]
-
-        var editTitle by remember {
-            mutableStateOf(stratToEdit.title)
-        }
-
-        var editSessionDesc by remember {
-            mutableStateOf(stratToEdit.sessionDesc)
-        }
-
-        var editSlNote by remember {
-            mutableStateOf(stratToEdit.slNote)
-        }
-
-        var editTpNote by remember {
-            mutableStateOf(stratToEdit.tpNote)
-        }
-
-        val editItems = remember {
-            mutableStateListOf<String>().apply {
-                addAll(stratToEdit.items)
-            }
-        }
-
+        var editTitle by remember { mutableStateOf(stratToEdit.title) }
+        var editSessionDesc by remember { mutableStateOf(stratToEdit.sessionDesc) }
+        var editSlNote by remember { mutableStateOf(stratToEdit.slNote) }
+        var editTpNote by remember { mutableStateOf(stratToEdit.tpNote) }
+        val editItems = remember { mutableStateListOf<String>().apply { addAll(stratToEdit.items) } }
         val editScrollState = rememberScrollState()
 
         AlertDialog(
-            onDismissRequest = {
-                editingStrategyIndex = null
-            },
+            onDismissRequest = { editingStrategyIndex = null },
             containerColor = cardBg,
             title = {
                 Row(
@@ -681,13 +572,10 @@ fun JournalChecklistScreen(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
-
                     Surface(
                         color = Color(0xFF2A0808),
                         shape = CircleShape,
-                        modifier = Modifier.clickable {
-                            editingStrategyIndex = null
-                        }
+                        modifier = Modifier.clickable { editingStrategyIndex = null }
                     ) {
                         Text(
                             text = " ✕ ",
@@ -706,44 +594,24 @@ fun JournalChecklistScreen(
                         .heightIn(max = 450.dp)
                         .verticalScroll(editScrollState)
                 ) {
-                    Text(
-                        text = "Strategy Title:",
-                        color = subTextColor,
-                        fontSize = 11.sp
-                    )
-
+                    Text(text = "Strategy Title:", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
                         value = editTitle,
-                        onValueChange = {
-                            editTitle = it
-                        },
+                        onValueChange = { editTitle = it },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "Session Description:",
-                        color = subTextColor,
-                        fontSize = 11.sp
-                    )
-
+                    Text(text = "Session Description:", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
                         value = editSessionDesc,
-                        onValueChange = {
-                            editSessionDesc = it
-                        },
+                        onValueChange = { editSessionDesc = it },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "📋 Checklist Items:",
-                        color = Color(0xFFFFC107),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = "📋 Checklist Items:", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
                     editItems.forEachIndexed { itemIdx, currentText ->
                         Row(
@@ -752,21 +620,11 @@ fun JournalChecklistScreen(
                         ) {
                             OutlinedTextField(
                                 value = currentText,
-                                onValueChange = {
-                                    editItems[itemIdx] = it
-                                },
+                                onValueChange = { editItems[itemIdx] = it },
                                 modifier = Modifier.weight(1f)
                             )
-
-                            IconButton(
-                                onClick = {
-                                    editItems.removeAt(itemIdx)
-                                }
-                            ) {
-                                Text(
-                                    "🗑️",
-                                    fontSize = 14.sp
-                                )
+                            IconButton(onClick = { editItems.removeAt(itemIdx) }) {
+                                Text("🗑️", fontSize = 14.sp)
                             }
                         }
                     }
@@ -774,56 +632,33 @@ fun JournalChecklistScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Button(
-                        onClick = {
-                            editItems.add(
-                                "New Checklist Point"
-                            )
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1A1D28)
-                        ),
+                        onClick = { editItems.add("New Checklist Point") },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1D28)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            "➕ Add New Checklist Point",
-                            color = Color(0xFFFFC107),
-                            fontSize = 11.sp
-                        )
+                        Text("➕ Add New Checklist Point", color = Color(0xFFFFC107), fontSize = 11.sp)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "🛑 Stop Loss Note:",
-                        color = Color(0xFFFF5252),
-                        fontSize = 11.sp
-                    )
-
+                    Text(text = "🛑 Stop Loss Note:", color = Color(0xFFFF5252), fontSize = 11.sp)
                     OutlinedTextField(
                         value = editSlNote,
-                        onValueChange = {
-                            editSlNote = it
-                        },
+                        onValueChange = { editSlNote = it },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "🎯 Target (TP) Note:",
-                        color = Color(0xFF00E676),
-                        fontSize = 11.sp
-                    )
-
+                    Text(text = "🎯 Target (TP) Note:", color = Color(0xFF00E676), fontSize = 11.sp)
                     OutlinedTextField(
                         value = editTpNote,
-                        onValueChange = {
-                            editTpNote = it
-                        },
+                        onValueChange = { editTpNote = it },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-            },            confirmButton = {
+            },
+            confirmButton = {
                 Button(
                     onClick = {
                         stratToEdit.title = editTitle
@@ -833,21 +668,11 @@ fun JournalChecklistScreen(
                         stratToEdit.items.clear()
                         stratToEdit.items.addAll(editItems)
                         editingStrategyIndex = null
-                        Toast.makeText(
-                            context,
-                            "Strategy Updated Successfully!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(context, "Strategy Updated Successfully!", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFC107)
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
                 ) {
-                    Text(
-                        "SAVE CHANGES",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("SAVE CHANGES", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -866,73 +691,35 @@ fun SelectorBoxWithAdd(
     subTextColor: Color,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+    var expanded by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-    ) {
-        Text(
-            text = label,
-            color = subTextColor,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(bottom = 2.dp)
-        )
-
+    Column(modifier = modifier) {
+        Text(text = label, color = subTextColor, fontSize = 11.sp, modifier = Modifier.padding(bottom = 2.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    inputBg,
-                    RoundedCornerShape(6.dp)
-                )
-                .clickable {
-                    expanded = true
-                }
+                .background(inputBg, RoundedCornerShape(6.dp))
+                .clickable { expanded = true }
                 .padding(10.dp)
         ) {
-            Text(
-                text = value,
-                color = textColor,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-
+            Text(text = value, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = {
-                    expanded = false
-                },
+                onDismissRequest = { expanded = false },
                 modifier = Modifier.background(cardBg)
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = option,
-                                color = textColor
-                            )
-                        },
+                        text = { Text(text = option, color = textColor) },
                         onClick = {
                             onSelect(option)
                             expanded = false
                         }
                     )
                 }
-
-                HorizontalDivider(
-                    color = Color(0xFF2A2E3D)
-                )
-
+                HorizontalDivider(color = Color(0xFF2A2E3D))
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = "➕ Add New Pair",
-                            color = Color(0xFFFFC107),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    text = { Text(text = "➕ Add New Pair", color = Color(0xFFFFC107), fontWeight = FontWeight.Bold) },
                     onClick = {
                         onSelect("➕ Add New Pair")
                         expanded = false
@@ -955,54 +742,26 @@ fun SelectorBox(
     subTextColor: Color,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+    var expanded by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-    ) {
-        Text(
-            text = label,
-            color = subTextColor,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(bottom = 2.dp)
-        )
-
+    Column(modifier = modifier) {
+        Text(text = label, color = subTextColor, fontSize = 11.sp, modifier = Modifier.padding(bottom = 2.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    inputBg,
-                    RoundedCornerShape(6.dp)
-                )
-                .clickable {
-                    expanded = true
-                }
+                .background(inputBg, RoundedCornerShape(6.dp))
+                .clickable { expanded = true }
                 .padding(10.dp)
         ) {
-            Text(
-                text = value,
-                color = textColor,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-
+            Text(text = value, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = {
-                    expanded = false
-                },
+                onDismissRequest = { expanded = false },
                 modifier = Modifier.background(cardBg)
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = option,
-                                color = textColor
-                            )
-                        },
+                        text = { Text(text = option, color = textColor) },
                         onClick = {
                             onSelect(option)
                             expanded = false
