@@ -159,8 +159,10 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Edit Trade Dialog
+    // Edit Trade Dialog with Status Selector
     editingTrade?.let { trade ->
+        var statusExpanded by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = { editingTrade = null },
             containerColor = cardBg,
@@ -192,6 +194,33 @@ fun CalendarAnalyticsScreens(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    Text(text = "Status:", color = subTextColor, fontSize = 11.sp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF1A1D28), RoundedCornerShape(6.dp))
+                            .clickable { statusExpanded = true }
+                            .padding(12.dp)
+                    ) {
+                        Text(text = newStatus, color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        DropdownMenu(
+                            expanded = statusExpanded,
+                            onDismissRequest = { statusExpanded = false }
+                        ) {
+                            listOf("WIN", "LOSS", "BREAKEVEN", "PENDING").forEach { statusOption ->
+                                DropdownMenuItem(
+                                    text = { Text(text = statusOption) },
+                                    onClick = {
+                                        newStatus = statusOption
+                                        statusExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(text = "PnL Amount ($):", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
                         value = newPnlText,
@@ -203,7 +232,15 @@ fun CalendarAnalyticsScreens(
             confirmButton = {
                 Button(
                     onClick = {
-                        val parsedPnl = newPnlText.toDoubleOrNull() ?: trade.pnlAmount
+                        var parsedPnl = newPnlText.toDoubleOrNull() ?: trade.pnlAmount
+                        if (newStatus == "LOSS" && parsedPnl > 0) {
+                            parsedPnl = -parsedPnl
+                        } else if (newStatus == "WIN" && parsedPnl < 0) {
+                            parsedPnl = kotlin.math.abs(parsedPnl)
+                        } else if (newStatus == "BREAKEVEN") {
+                            parsedPnl = 0.0
+                        }
+
                         onStatusUpdate(trade, newStatus, parsedPnl, newPair, newSession)
                         editingTrade = null
                         Toast.makeText(context, "Trade Updated!", Toast.LENGTH_SHORT).show()
@@ -216,4 +253,3 @@ fun CalendarAnalyticsScreens(
         )
     }
 }
-
