@@ -190,10 +190,8 @@ fun JournalChecklistScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // STEP 1: Asian, London, New York
                     SelectorBox("⏰ Session", session, listOf("Asian (Sydney)", "London", "New York"), { session = it }, cardBg, inputBg, textColor, subTextColor, Modifier.weight(1f))
 
-                    // STEP 2: Interactive Status trigger
                     SelectorBox("🎯 Status", resultStatus, listOf("PENDING", "WIN", "LOSS", "BREAKEVEN"), { newStatus ->
                         resultStatus = newStatus
                         if (newStatus == "WIN" || newStatus == "LOSS") {
@@ -231,7 +229,6 @@ fun JournalChecklistScreen(
             }
         }
 
-        // STEP 3: Strategy Tabs with Double Click Edit Popup
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -242,7 +239,6 @@ fun JournalChecklistScreen(
                     Button(
                         onClick = {
                             if (selectedStrategyIndex == index) {
-                                // Double click detected -> trigger edit option popup
                                 showEditMenuForStrategy = if (showEditMenuForStrategy == index) null else index
                             } else {
                                 selectedStrategyIndex = index
@@ -264,7 +260,6 @@ fun JournalChecklistScreen(
                         )
                     }
 
-                    // Edit popup trigger overlay
                     if (showEditMenuForStrategy == index) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
@@ -304,7 +299,6 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Strategy Checklist Display
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
@@ -357,7 +351,7 @@ fun JournalChecklistScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LinearProgressIndicator(
-                    progress = { progressPercentage / 100f },
+                    progress = progressPercentage / 100f,
                     modifier = Modifier.fillMaxWidth().height(8.dp),
                     color = Color(0xFFFFC107),
                     trackColor = inputBg,
@@ -370,7 +364,6 @@ fun JournalChecklistScreen(
                     modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
                 )
 
-                // Static SL & TP Parameters Note Box
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -425,7 +418,6 @@ fun JournalChecklistScreen(
         }
     }
 
-    // STEP 2 DIALOG: WIN/LOSS Amount Entry Dialog
     if (showPnlDialog) {
         AlertDialog(
             onDismissRequest = { showPnlDialog = false },
@@ -440,4 +432,14 @@ fun JournalChecklistScreen(
             },
             text = {
                 Column {
-     
+                    Text(
+                        text = "Enter $targetStatusForDialog Amount ($):",
+                        color = subTextColor,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    OutlinedTextField(
+                        value = tempPnlInput,
+                        onValueChange = { tempPnlInput = it },
+                        placeholder = { Tex
