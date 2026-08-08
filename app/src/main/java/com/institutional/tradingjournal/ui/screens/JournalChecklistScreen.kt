@@ -212,7 +212,6 @@ fun JournalChecklistScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Sydney moved to #4 Position
                     SelectorBox("⏰ Session", session, listOf("Asian", "London", "New York", "Sydney"), { session = it }, cardBg, inputBg, textColor, subTextColor, Modifier.weight(1f))
 
                     SelectorBox("🎯 Status", resultStatus, listOf("PENDING", "WIN", "LOSS", "BREAKEVEN"), { newStatus ->
@@ -252,6 +251,7 @@ fun JournalChecklistScreen(
             }
         }
 
+        // Strategy Selector Buttons with Top-Right Pencil Icon
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -275,12 +275,22 @@ fun JournalChecklistScreen(
                         ),
                         shape = RoundedCornerShape(6.dp)
                     ) {
-                        Text(
-                            text = title,
-                            fontSize = 11.sp,
-                            color = if (isSelected) Color.White else subTextColor,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = title,
+                                fontSize = 11.sp,
+                                color = if (isSelected) Color.White else subTextColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                            // Pencil Icon Inside Top-Right Corner
+                            Text(
+                                text = "✏️",
+                                fontSize = 9.sp,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(top = 2.dp, end = 4.dp)
+                            )
+                        }
                     }
 
                     if (showEditMenuForStrategy == index) {
@@ -297,7 +307,7 @@ fun JournalChecklistScreen(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "✏️ Edit",
+                                    text = "✏️ Edit Strategy",
                                     color = Color(0xFFFFC107),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
