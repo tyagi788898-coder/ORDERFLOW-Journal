@@ -48,7 +48,6 @@ fun JournalChecklistScreen(
 
     var selectedDateText by remember { mutableStateOf(SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())) }
     
-    // Dynamic Pair List State
     val pairList = remember { mutableStateListOf("XAUUSD", "EURUSD", "US30", "BTCUSD") }
     var pair by remember { mutableStateOf("XAUUSD") }
     var showAddPairDialog by remember { mutableStateOf(false) }
@@ -59,12 +58,10 @@ fun JournalChecklistScreen(
     var pnlAmountText by remember { mutableStateOf("0.0") }
     var selectedStrategyIndex by remember { mutableStateOf(0) }
 
-    // Dialog state for WIN/LOSS PnL Input
     var showPnlDialog by remember { mutableStateOf(false) }
     var tempPnlInput by remember { mutableStateOf("") }
     var targetStatusForDialog by remember { mutableStateOf("WIN") }
 
-    // Editable Strategies Memory
     val strategies = remember {
         mutableStateListOf(
             StrategyConfig(
@@ -193,7 +190,6 @@ fun JournalChecklistScreen(
                         }
                     }
 
-                    // Pair Selector Box with "Add New Pair"
                     SelectorBoxWithAdd(
                         label = "💱 Pair",
                         value = pair,
@@ -216,7 +212,8 @@ fun JournalChecklistScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectorBox("⏰ Session", session, listOf("Asian (Sydney)", "London", "New York"), { session = it }, cardBg, inputBg, textColor, subTextColor, Modifier.weight(1f))
+                    // Sydney moved to #4 Position
+                    SelectorBox("⏰ Session", session, listOf("Asian", "London", "New York", "Sydney"), { session = it }, cardBg, inputBg, textColor, subTextColor, Modifier.weight(1f))
 
                     SelectorBox("🎯 Status", resultStatus, listOf("PENDING", "WIN", "LOSS", "BREAKEVEN"), { newStatus ->
                         resultStatus = newStatus
@@ -255,7 +252,6 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Strategy Tabs
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -445,7 +441,6 @@ fun JournalChecklistScreen(
         }
     }
 
-    // ADD NEW PAIR DIALOG
     if (showAddPairDialog) {
         AlertDialog(
             onDismissRequest = { showAddPairDialog = false },
@@ -495,7 +490,6 @@ fun JournalChecklistScreen(
         )
     }
 
-    // WIN/LOSS PnL AMOUNT DIALOG
     if (showPnlDialog) {
         AlertDialog(
             onDismissRequest = { showPnlDialog = false },
@@ -547,7 +541,6 @@ fun JournalChecklistScreen(
         )
     }
 
-    // EDIT STRATEGY DIALOG
     editingStrategyIndex?.let { stratIdx ->
         val stratToEdit = strategies[stratIdx]
         var editTitle by remember { mutableStateOf(stratToEdit.title) }
