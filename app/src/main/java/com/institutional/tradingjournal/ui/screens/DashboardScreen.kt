@@ -1,5 +1,6 @@
 package com.institutional.tradingjournal.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,8 +29,8 @@ fun DashboardScreen(
     val subTextColor = if (isDark) Color.Gray else Color(0xFF555555)
 
     val totalTrades = tradeList.size
-    val wins = tradeList.count { it.result == "WIN" }
-    val losses = tradeList.count { it.result == "LOSS" }
+    val wins = tradeList.count { it.result == "WIN" || it.pnlAmount > 0 }
+    val losses = tradeList.count { it.result == "LOSS" || it.pnlAmount < 0 }
     val winRate = if (totalTrades > 0) (wins * 100) / totalTrades else 0
     val totalPnl = tradeList.sumOf { it.pnlAmount }
 
@@ -53,7 +56,6 @@ fun DashboardScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Summary Cards Grid
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -116,5 +118,80 @@ fun DashboardScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Cumulative Performance Equity Graph
+        Card(
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "📊 Cumulative Equity Growth Curve",
+                    color = Color(0xFFFFC107),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Performance trajectory from Trade 1 to Latest",
+                    color = subTextColor,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                if (tradeList.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Log trades in Journal to see Equity Graph", color = subTextColor, fontSize = 12.sp)
+                    }
+                } else {
+                    val chronologicalTrades = tradeList.reversed()
+                    val cumulativePoints = mutableListOf<Double>()
+                    var runningSum = 0.0
+                    cumulativePoints.add(0.0)
+                    chronologicalTrades.forEach {
+                        runningSum += it.pnlAmount
+                        cumulativePoints.add(runningSum)
+                    }
+
+                    val minVal = cumulativePoints.minOrNull() ?: 0.0
+                    val maxVal = cumulativePoints.maxOrNull() ?: 1.0
+                    val range = if (maxVal == minVal) 1.0 else maxVal - minVal
+
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 10.dp, bottom = 10.dp, start = 8.dp, end = 8.dp)
+                    ) {
+                        val width = size.width
+                        val height = size.height
+                        val path = Path()
+
+                        cumulativePoints.forEachIndexed { index, value ->
+                            val x = (index.toFloat() / (cumulativePoints.size - 1)) * width
+                            val y = height - (((value - minVal) / range).toFloat() * height)
+                            if (index == 0) {
+                                path.moveTo(x, y)
+                            } else {
+                                path.lineTo(x, y)
+                            }
+                        }
+
+                        drawPath(
+                            path = path,
+                            color = Color(0xFF00E676),
+                            style = Stroke(width = 4.dp.toPx())
+                        )
+                    }
+                }
+            }
+        }
     }
 }
+
