@@ -17,7 +17,6 @@ import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
 import com.institutional.tradingjournal.ui.navigation.OrderflowNavGraph
 import com.institutional.tradingjournal.ui.navigation.Screen
-import com.institutional.tradingjournal.util.TradeStorage
 
 @Composable
 fun OrderflowJournalTheme(
@@ -47,11 +46,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             var isDark by remember { mutableStateOf(true) }
             val tradeList = remember { mutableStateListOf<TradeEntry>() }
-
-            LaunchedEffect(Unit) {
-                tradeList.clear()
-                tradeList.addAll(TradeStorage.loadTrades(this@MainActivity))
-            }
 
             OrderflowJournalTheme(darkTheme = isDark) {
                 val navController = rememberNavController()
@@ -85,23 +79,19 @@ class MainActivity : ComponentActivity() {
                         tradeList = tradeList,
                         onTradeLogged = { newTrade ->
                             tradeList.add(0, newTrade)
-                            TradeStorage.saveTrades(this@MainActivity, tradeList)
                         },
                         onDeleteTrade = { tradeToDelete ->
                             tradeList.remove(tradeToDelete)
-                            TradeStorage.saveTrades(this@MainActivity, tradeList)
                         },
                         onStatusUpdate = { trade, status, pnl, pair, session ->
                             val index = tradeList.indexOf(trade)
                             if (index != -1) {
-                                val updated = trade.copy(
+                                tradeList[index] = trade.copy(
                                     result = status,
                                     pnlAmount = pnl,
                                     pair = pair,
                                     session = session
                                 )
-                                tradeList[index] = updated
-                                TradeStorage.saveTrades(this@MainActivity, tradeList)
                             }
                         },
                         modifier = Modifier.padding(innerPadding)
@@ -111,3 +101,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
