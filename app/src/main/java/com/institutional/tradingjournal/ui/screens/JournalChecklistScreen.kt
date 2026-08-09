@@ -251,7 +251,7 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Strategy Buttons with White Rectangle Pencil Icon
+        // Strategy Buttons with White Square Pencil Icon
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -282,9 +282,9 @@ fun JournalChecklistScreen(
                                 color = if (isSelected) Color.White else subTextColor,
                                 fontWeight = FontWeight.Bold
                             )
-                            // White Pencil Badge Icon
+                            // White Square Pencil Icon (Image 4 Style)
                             Text(
-                                text = "✏️",
+                                text = "📝",
                                 fontSize = 9.sp,
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
@@ -309,7 +309,7 @@ fun JournalChecklistScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "✏️ Edit",
+                                    text = "📝 Edit",
                                     color = Color(0xFFFFC107),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
