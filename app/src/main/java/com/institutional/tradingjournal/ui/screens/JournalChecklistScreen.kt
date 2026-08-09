@@ -251,7 +251,7 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Clean Strategy Buttons with Clean Edit Badges
+        // Strategy Buttons with Gear Icon
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -282,6 +282,7 @@ fun JournalChecklistScreen(
                                 color = if (isSelected) Color.White else subTextColor,
                                 fontWeight = FontWeight.Bold
                             )
+                            // Gear Icon
                             Text(
                                 text = "⚙️",
                                 fontSize = 8.sp,
@@ -306,7 +307,7 @@ fun JournalChecklistScreen(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Edit",
+                                    text = "Edit", // Simple "Edit" text
                                     color = Color(0xFFFFC107),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
