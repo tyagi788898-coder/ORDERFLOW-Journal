@@ -11,9 +11,13 @@ object TradeStorage {
     private val gson = Gson()
 
     fun saveTrades(context: Context, trades: List<TradeEntry>) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val jsonString = gson.toJson(trades)
-        prefs.edit().putString(KEY_TRADES, jsonString).apply()
+        try {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val jsonString = gson.toJson(trades)
+            prefs.edit().putString(KEY_TRADES, jsonString).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun loadTrades(context: Context): List<TradeEntry> {
