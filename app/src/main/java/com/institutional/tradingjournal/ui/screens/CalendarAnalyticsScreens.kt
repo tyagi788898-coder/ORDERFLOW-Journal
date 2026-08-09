@@ -160,9 +160,10 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Edit Trade Dialog with Fixed Height Input Field & Explicit Yellow Contrast
+    // Scrollable Edit Trade Dialog with Soft Keyboard Adjustments
     editingTrade?.let { trade ->
         var statusExpanded by remember { mutableStateOf(false) }
+        val dialogScrollState = rememberScrollState()
 
         AlertDialog(
             onDismissRequest = { editingTrade = null },
@@ -176,7 +177,12 @@ fun CalendarAnalyticsScreens(
                 )
             },
             text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 350.dp)
+                        .verticalScroll(dialogScrollState)
+                ) {
                     Text(text = "Pair Symbol:", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
                         value = newPair,
@@ -239,10 +245,10 @@ fun CalendarAnalyticsScreens(
                         value = newPnlText,
                         onValueChange = { newPnlText = it },
                         singleLine = true,
-                        textStyle = TextStyle(color = Color(0xFFFFC107), fontSize = 15.sp, fontWeight = FontWeight.Bold),
+                        textStyle = TextStyle(color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color(0xFFFFC107),
-                            unfocusedTextColor = Color(0xFFFFC107),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
                             focusedBorderColor = Color(0xFFFFC107),
                             unfocusedBorderColor = Color.Gray,
                             focusedContainerColor = Color(0xFF1A1D28),
