@@ -159,7 +159,7 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Edit Trade Dialog with Fixed Height Input Field
+    // Edit Trade Dialog with Fixed Height Input Field & Visible Text
     editingTrade?.let { trade ->
         var statusExpanded by remember { mutableStateOf(false) }
 
@@ -274,4 +274,3 @@ fun CalendarAnalyticsScreens(
         )
     }
 }
-
