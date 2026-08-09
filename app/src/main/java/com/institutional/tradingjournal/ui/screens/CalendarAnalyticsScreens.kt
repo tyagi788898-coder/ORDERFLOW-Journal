@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,15 +31,11 @@ fun CalendarAnalyticsScreens(
     val textColor = if (isDark) Color.White else Color(0xFF12141C)
     val subTextColor = if (isDark) Color.Gray else Color(0xFF555555)
 
-    var editingTrade by remember { mutableStateOf<TradeEntry?>(null) }
-    var newStatus by remember { mutableStateOf("WIN") }
-    var newPnlValue by remember { mutableStateOf(0.0) }
-    var newPair by remember { mutableStateOf("") }
-    var newSession by remember { mutableStateOf("") }
+    var viewingTrade by remember { mutableStateOf<TradeEntry?>(null) }
+    var reviewingTrade by remember { mutableStateOf<TradeEntry?>(null) }
 
-    var showPnlDialog by remember { mutableStateOf(false) }
-    var tempPnlInput by remember { mutableStateOf("") }
-    var targetStatusForDialog by remember { mutableStateOf("WIN") }
+    var mistakeText by remember { mutableStateOf("") }
+    var learningText by remember { mutableStateOf("") }
 
     val scrollState = rememberScrollState()
 
@@ -52,7 +47,7 @@ fun CalendarAnalyticsScreens(
             .verticalScroll(scrollState)
     ) {
         Text(
-            text = "📅 Trade History & Analytics",
+            text = "📅 Trade History",
             color = Color(0xFFFFC107),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
@@ -87,39 +82,48 @@ fun CalendarAnalyticsScreens(
                         .fillMaxWidth()
                         .padding(bottom = 12.dp)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(14.dp)
+                    ) {
+                        // Clickable Upper Trade Box Area (Red Box Area in Screenshot)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewingTrade = trade }
                         ) {
-                            Text(
-                                text = "${trade.pair} • ${trade.session}",
-                                color = textColor,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            val pnlColor = when {
-                                trade.pnlAmount > 0 -> Color(0xFF00E676)
-                                trade.pnlAmount < 0 -> Color(0xFFD32F2F)
-                                else -> Color(0xFFFFC107)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${trade.pair} • ${trade.session}",
+                                    color = textColor,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                val pnlColor = when {
+                                    trade.pnlAmount > 0 -> Color(0xFF00E676)
+                                    trade.pnlAmount < 0 -> Color(0xFFD32F2F)
+                                    else -> Color(0xFFFFC107)
+                                }
+                                Text(
+                                    text = if (trade.pnlAmount >= 0) "+$${trade.pnlAmount}" else "-$${kotlin.math.abs(trade.pnlAmount)}",
+                                    color = pnlColor,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
-                            Text(
-                                text = if (trade.pnlAmount >= 0) "+$${trade.pnlAmount}" else "-$${kotlin.math.abs(trade.pnlAmount)}",
-                                color = pnlColor,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Date: ${trade.date}", color = subTextColor, fontSize = 11.sp)
-                            Text(text = "Status: ${trade.result}", color = Color(0xFFFFC107), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Date: ${trade.date}", color = subTextColor, fontSize = 11.sp)
+                                Text(text = "Status: ${trade.result}", color = Color(0xFFFFC107), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
 
                         HorizontalDivider(
@@ -127,6 +131,7 @@ fun CalendarAnalyticsScreens(
                             color = Color(0xFF2A2E3D)
                         )
 
+                        // Action Buttons: Edit (Mistake/Learning Review) & Delete
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End,
@@ -139,11 +144,9 @@ fun CalendarAnalyticsScreens(
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier
                                     .clickable {
-                                        editingTrade = trade
-                                        newStatus = trade.result
-                                        newPnlValue = trade.pnlAmount
-                                        newPair = trade.pair
-                                        newSession = trade.session
+                                        reviewingTrade = trade
+                                        mistakeText = trade.mistake
+                                        learningText = trade.learning
                                     }
                                     .padding(end = 16.dp)
                             )
@@ -164,181 +167,150 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Main Edit Dialog (Equal Heights, No Typing Resizing Issues)
-    editingTrade?.let { trade ->
-        var statusExpanded by remember { mutableStateOf(false) }
-
+    // 1. Read-Only Detailed Trade View Modal
+    viewingTrade?.let { trade ->
         AlertDialog(
-            onDismissRequest = { editingTrade = null },
+            onDismissRequest = { viewingTrade = null },
             containerColor = cardBg,
             title = {
-                Text(
-                    text = "✏️ Edit Trade Log",
-                    color = Color(0xFFFFC107),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📋 Full Trade Details",
+                        color = Color(0xFFFFC107),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "✕",
+                        color = Color.Gray,
+                        fontSize = 16.sp,
+                        modifier = Modifier.clickable { viewingTrade = null }
+                    )
+                }
             },
             text = {
-                Column {
-                    Text(text = "Pair Symbol:", color = subTextColor, fontSize = 11.sp)
-                    OutlinedTextField(
-                        value = newPair,
-                        onValueChange = { newPair = it },
-                        textStyle = TextStyle(color = textColor, fontSize = 14.sp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = textColor,
-                            unfocusedTextColor = textColor,
-                            focusedBorderColor = Color(0xFFFFC107)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(text = "Session:", color = subTextColor, fontSize = 11.sp)
-                    OutlinedTextField(
-                        value = newSession,
-                        onValueChange = { newSession = it },
-                        textStyle = TextStyle(color = textColor, fontSize = 14.sp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = textColor,
-                            unfocusedTextColor = textColor,
-                            focusedBorderColor = Color(0xFFFFC107)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(text = "Status:", color = subTextColor, fontSize = 11.sp)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFF1A1D28), RoundedCornerShape(4.dp))
-                            .clickable { statusExpanded = true }
-                            .padding(14.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = newStatus, color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Text(text = "▼", color = Color.Gray, fontSize = 10.sp)
-                        }
-
-                        DropdownMenu(
-                            expanded = statusExpanded,
-                            onDismissRequest = { statusExpanded = false }
-                        ) {
-                            listOf("WIN", "LOSS", "BREAKEVEN", "PENDING").forEach { statusOption ->
-                                DropdownMenuItem(
-                                    text = { Text(text = statusOption) },
-                                    onClick = {
-                                        newStatus = statusOption
-                                        statusExpanded = false
-                                        if (statusOption == "WIN" || statusOption == "LOSS") {
-                                            targetStatusForDialog = statusOption
-                                            tempPnlInput = ""
-                                            showPnlDialog = true
-                                        } else if (statusOption == "BREAKEVEN") {
-                                            newPnlValue = 0.0
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Pair: ${trade.pair}", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("Session: ${trade.session}", color = textColor, fontSize = 13.sp)
+                    Text("Date: ${trade.date}", color = subTextColor, fontSize = 12.sp)
+                    Text("Strategy: ${trade.strategy}", color = Color(0xFFFFC107), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text("Checklist Completion: ${trade.scorePercentage}%", color = Color(0xFF00E676), fontSize = 12.sp)
 
                     Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = Color(0xFF2A2E3D))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFF1A1D28), RoundedCornerShape(6.dp))
-                            .padding(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "Current PnL:", color = subTextColor, fontSize = 12.sp)
-                            val pnlColor = if (newPnlValue >= 0) Color(0xFF00E676) else Color(0xFFD32F2F)
-                            Text(
-                                text = if (newPnlValue >= 0) "+$$newPnlValue" else "-$$${kotlin.math.abs(newPnlValue)}",
-                                color = pnlColor,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    Text("❌ Mistake Note:", color = Color(0xFFFF5252), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (trade.mistake.isNotBlank()) trade.mistake else "No mistake noted.",
+                        color = if (trade.mistake.isNotBlank()) textColor else subTextColor,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Text("💡 Learning Note:", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (trade.learning.isNotBlank()) trade.learning else "No learning noted.",
+                        color = if (trade.learning.isNotBlank()) textColor else subTextColor,
+                        fontSize = 12.sp
+                    )
                 }
             },
             confirmButton = {
                 Button(
-                    onClick = {
-                        onStatusUpdate(trade, newStatus, newPnlValue, newPair, newSession)
-                        editingTrade = null
-                        Toast.makeText(context, "Trade Updated!", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = { viewingTrade = null },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
                 ) {
-                    Text("SAVE", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("CLOSE", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
     }
 
-    // Separate Dedicated Popup for Amount Input (Like Journal)
-    if (showPnlDialog) {
+    // 2. Trade Review (Mistake & Learning Edit Modal)
+    reviewingTrade?.let { trade ->
         AlertDialog(
-            onDismissRequest = { showPnlDialog = false },
+            onDismissRequest = { reviewingTrade = null },
             containerColor = cardBg,
             title = {
-                Text(
-                    text = if (targetStatusForDialog == "WIN") "🎉 Log WIN Amount" else "📉 Log LOSS Amount",
-                    color = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📝 Trade Review",
+                        color = Color(0xFFFFC107),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Surface(
+                        color = Color(0xFF1A1D28),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "After Trade",
+                            color = Color(0xFF00E676),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             },
             text = {
-                Column {
-                    Text(
-                        text = "Enter $targetStatusForDialog Amount ($):",
-                        color = subTextColor,
-                        fontSize = 12.sp
-                    )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(text = "❌ Mistake", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(6.dp))
-
                     OutlinedTextField(
-                        value = tempPnlInput,
-                        onValueChange = { tempPnlInput = it },
-                        placeholder = { Text("e.g. 250") },
-                        singleLine = true,
+                        value = mistakeText,
+                        onValueChange = { mistakeText = it },
+                        placeholder = { Text("What went wrong during execution?", color = subTextColor, fontSize = 11.sp) },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
                             focusedTextColor = textColor,
-                            unfocusedTextColor = textColor
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = Color(0xFFFF5252),
+                            focusedContainerColor = Color(0xFF1A1D28),
+                            unfocusedContainerColor = Color(0xFF1A1D28)
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().height(100.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(text = "💡 Learning", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = learningText,
+                        onValueChange = { learningText = it },
+                        placeholder = { Text("Key takeaway or lesson learned...", color = subTextColor, fontSize = 11.sp) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = Color(0xFFFFC107),
+                            focusedContainerColor = Color(0xFF1A1D28),
+                            unfocusedContainerColor = Color(0xFF1A1D28)
+                        ),
+                        modifier = Modifier.fillMaxWidth().height(100.dp)
                     )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        val absAmount = tempPnlInput.toDoubleOrNull() ?: 0.0
-                        newPnlValue = if (targetStatusForDialog == "WIN") absAmount else -absAmount
-                        showPnlDialog = false
+                        trade.mistake = mistakeText
+                        trade.learning = learningText
+                        onStatusUpdate(trade, trade.result, trade.pnlAmount, trade.pair, trade.session)
+                        reviewingTrade = null
+                        Toast.makeText(context, "Trade Review Saved!", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F)
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
                 ) {
-                    Text("SAVE AMOUNT", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("SAVE REVIEW", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
