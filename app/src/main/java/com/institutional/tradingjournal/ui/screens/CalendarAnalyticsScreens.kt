@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -159,7 +160,7 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Edit Trade Dialog with Fixed Height Input Field & Visible Text
+    // Edit Trade Dialog with Fixed Height Input Field & Explicit Yellow Contrast
     editingTrade?.let { trade ->
         var statusExpanded by remember { mutableStateOf(false) }
 
@@ -175,11 +176,12 @@ fun CalendarAnalyticsScreens(
                 )
             },
             text = {
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Text(text = "Pair Symbol:", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
                         value = newPair,
                         onValueChange = { newPair = it },
+                        textStyle = TextStyle(color = textColor, fontSize = 14.sp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = textColor,
                             unfocusedTextColor = textColor,
@@ -194,6 +196,7 @@ fun CalendarAnalyticsScreens(
                     OutlinedTextField(
                         value = newSession,
                         onValueChange = { newSession = it },
+                        textStyle = TextStyle(color = textColor, fontSize = 14.sp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = textColor,
                             unfocusedTextColor = textColor,
@@ -236,9 +239,10 @@ fun CalendarAnalyticsScreens(
                         value = newPnlText,
                         onValueChange = { newPnlText = it },
                         singleLine = true,
+                        textStyle = TextStyle(color = Color(0xFFFFC107), fontSize = 15.sp, fontWeight = FontWeight.Bold),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = textColor,
-                            unfocusedTextColor = textColor,
+                            focusedTextColor = Color(0xFFFFC107),
+                            unfocusedTextColor = Color(0xFFFFC107),
                             focusedBorderColor = Color(0xFFFFC107),
                             unfocusedBorderColor = Color.Gray,
                             focusedContainerColor = Color(0xFF1A1D28),
