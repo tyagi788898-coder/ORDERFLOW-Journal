@@ -34,9 +34,13 @@ fun CalendarAnalyticsScreens(
 
     var editingTrade by remember { mutableStateOf<TradeEntry?>(null) }
     var newStatus by remember { mutableStateOf("WIN") }
-    var newPnlText by remember { mutableStateOf("") }
+    var newPnlValue by remember { mutableStateOf(0.0) }
     var newPair by remember { mutableStateOf("") }
     var newSession by remember { mutableStateOf("") }
+
+    var showPnlDialog by remember { mutableStateOf(false) }
+    var tempPnlInput by remember { mutableStateOf("") }
+    var targetStatusForDialog by remember { mutableStateOf("WIN") }
 
     val scrollState = rememberScrollState()
 
@@ -129,7 +133,7 @@ fun CalendarAnalyticsScreens(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "⚙️ Edit",
+                                text = "✏️ Edit",
                                 color = Color(0xFFFFC107),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -137,7 +141,7 @@ fun CalendarAnalyticsScreens(
                                     .clickable {
                                         editingTrade = trade
                                         newStatus = trade.result
-                                        newPnlText = trade.pnlAmount.toString()
+                                        newPnlValue = trade.pnlAmount
                                         newPair = trade.pair
                                         newSession = trade.session
                                     }
@@ -160,29 +164,23 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Scrollable Edit Trade Dialog with Soft Keyboard Adjustments
+    // Main Edit Dialog (Equal Heights, No Typing Resizing Issues)
     editingTrade?.let { trade ->
         var statusExpanded by remember { mutableStateOf(false) }
-        val dialogScrollState = rememberScrollState()
 
         AlertDialog(
             onDismissRequest = { editingTrade = null },
             containerColor = cardBg,
             title = {
                 Text(
-                    text = "⚙️ Edit Trade Log",
+                    text = "✏️ Edit Trade Log",
                     color = Color(0xFFFFC107),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 350.dp)
-                        .verticalScroll(dialogScrollState)
-                ) {
+                Column {
                     Text(text = "Pair Symbol:", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
                         value = newPair,
@@ -196,7 +194,7 @@ fun CalendarAnalyticsScreens(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(text = "Session:", color = subTextColor, fontSize = 11.sp)
                     OutlinedTextField(
@@ -211,17 +209,25 @@ fun CalendarAnalyticsScreens(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(text = "Status:", color = subTextColor, fontSize = 11.sp)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF1A1D28), RoundedCornerShape(6.dp))
+                            .background(Color(0xFF1A1D28), RoundedCornerShape(4.dp))
                             .clickable { statusExpanded = true }
-                            .padding(12.dp)
+                            .padding(14.dp)
                     ) {
-                        Text(text = newStatus, color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = newStatus, color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text(text = "▼", color = Color.Gray, fontSize = 10.sp)
+                        }
+
                         DropdownMenu(
                             expanded = statusExpanded,
                             onDismissRequest = { statusExpanded = false }
@@ -232,53 +238,107 @@ fun CalendarAnalyticsScreens(
                                     onClick = {
                                         newStatus = statusOption
                                         statusExpanded = false
+                                        if (statusOption == "WIN" || statusOption == "LOSS") {
+                                            targetStatusForDialog = statusOption
+                                            tempPnlInput = ""
+                                            showPnlDialog = true
+                                        } else if (statusOption == "BREAKEVEN") {
+                                            newPnlValue = 0.0
+                                        }
                                     }
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(text = "PnL Amount ($):", color = subTextColor, fontSize = 11.sp)
-                    OutlinedTextField(
-                        value = newPnlText,
-                        onValueChange = { newPnlText = it },
-                        singleLine = true,
-                        textStyle = TextStyle(color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFFFFC107),
-                            unfocusedBorderColor = Color.Gray,
-                            focusedContainerColor = Color(0xFF1A1D28),
-                            unfocusedContainerColor = Color(0xFF1A1D28)
-                        ),
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
-                    )
+                            .background(Color(0xFF1A1D28), RoundedCornerShape(6.dp))
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "Current PnL:", color = subTextColor, fontSize = 12.sp)
+                            val pnlColor = if (newPnlValue >= 0) Color(0xFF00E676) else Color(0xFFD32F2F)
+                            Text(
+                                text = if (newPnlValue >= 0) "+$$newPnlValue" else "-$$${kotlin.math.abs(newPnlValue)}",
+                                color = pnlColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        var parsedPnl = newPnlText.toDoubleOrNull() ?: trade.pnlAmount
-                        if (newStatus == "LOSS" && parsedPnl > 0) {
-                            parsedPnl = -parsedPnl
-                        } else if (newStatus == "WIN" && parsedPnl < 0) {
-                            parsedPnl = kotlin.math.abs(parsedPnl)
-                        } else if (newStatus == "BREAKEVEN") {
-                            parsedPnl = 0.0
-                        }
-
-                        onStatusUpdate(trade, newStatus, parsedPnl, newPair, newSession)
+                        onStatusUpdate(trade, newStatus, newPnlValue, newPair, newSession)
                         editingTrade = null
                         Toast.makeText(context, "Trade Updated!", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
                 ) {
                     Text("SAVE", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    // Separate Dedicated Popup for Amount Input (Like Journal)
+    if (showPnlDialog) {
+        AlertDialog(
+            onDismissRequest = { showPnlDialog = false },
+            containerColor = cardBg,
+            title = {
+                Text(
+                    text = if (targetStatusForDialog == "WIN") "🎉 Log WIN Amount" else "📉 Log LOSS Amount",
+                    color = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Enter $targetStatusForDialog Amount ($):",
+                        color = subTextColor,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    OutlinedTextField(
+                        value = tempPnlInput,
+                        onValueChange = { tempPnlInput = it },
+                        placeholder = { Text("e.g. 250") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val absAmount = tempPnlInput.toDoubleOrNull() ?: 0.0
+                        newPnlValue = if (targetStatusForDialog == "WIN") absAmount else -absAmount
+                        showPnlDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (targetStatusForDialog == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F)
+                    )
+                ) {
+                    Text("SAVE AMOUNT", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
