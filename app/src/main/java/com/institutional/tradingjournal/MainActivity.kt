@@ -17,25 +17,13 @@ import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
 import com.institutional.tradingjournal.ui.navigation.OrderflowNavGraph
 import com.institutional.tradingjournal.ui.navigation.Screen
+import com.institutional.tradingjournal.util.TradeStorage
 
 @Composable
-fun OrderflowJournalTheme(
-    darkTheme: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val darkColors = darkColorScheme(
-        primary = Color(0xFFFFC107),
-        background = Color(0xFF090A0F),
-        surface = Color(0xFF12141C)
-    )
-    val lightColors = lightColorScheme(
-        primary = Color(0xFFFFC107),
-        background = Color(0xFFF4F6F9),
-        surface = Color.White
-    )
-
+fun OrderflowJournalTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (darkTheme) darkColors else lightColors,
+        colorScheme = if (darkTheme) darkColorScheme(primary = Color(0xFFFFC107), background = Color(0xFF090A0F), surface = Color(0xFF12141C)) 
+        else lightColorScheme(primary = Color(0xFFFFC107), background = Color(0xFFF4F6F9), surface = Color.White),
         content = content
     )
 }
@@ -45,30 +33,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             var isDark by remember { mutableStateOf(true) }
-            val tradeList = remember { mutableStateListOf<TradeEntry>() }
+            // Data Persistence: Load on launch
+            val tradeList = remember { mutableStateListOf<TradeEntry>().apply { addAll(TradeStorage.loadTrades(this@MainActivity)) } }
 
             OrderflowJournalTheme(darkTheme = isDark) {
                 val navController = rememberNavController()
                 var currentRoute by remember { mutableStateOf(Screen.Splash.route) }
-
-                navController.addOnDestinationChangedListener { _, destination, _ ->
-                    currentRoute = destination.route ?: Screen.Splash.route
-                }
+                navController.addOnDestinationChangedListener { _, destination, _ -> currentRoute = destination.route ?: Screen.Splash.route }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         if (currentRoute != Screen.Splash.route) {
-                            OrderflowBottomBar(
-                                currentRoute = currentRoute,
-                                onNavigate = { route ->
-                                    navController.navigate(route) {
-                                        popUpTo(Screen.Dashboard.route) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            )
+                            OrderflowBottomBar(currentRoute = currentRoute, onNavigate = { route ->
+                                navController.navigate(route) { popUpTo(Screen.Dashboard.route) { saveState = true }; launchSingleTop = true; restoreState = true }
+                            })
                         }
                     }
                 ) { innerPadding ->
@@ -79,19 +58,17 @@ class MainActivity : ComponentActivity() {
                         tradeList = tradeList,
                         onTradeLogged = { newTrade ->
                             tradeList.add(0, newTrade)
+                            TradeStorage.saveTrades(this@MainActivity, tradeList) // Persist
                         },
                         onDeleteTrade = { tradeToDelete ->
                             tradeList.remove(tradeToDelete)
+                            TradeStorage.saveTrades(this@MainActivity, tradeList) // Persist
                         },
                         onStatusUpdate = { trade, status, pnl, pair, session ->
                             val index = tradeList.indexOf(trade)
                             if (index != -1) {
-                                tradeList[index] = trade.copy(
-                                    result = status,
-                                    pnlAmount = pnl,
-                                    pair = pair,
-                                    session = session
-                                )
+                                tradeList[index] = trade.copy(result = status, pnlAmount = pnl, pair = pair, session = session)
+                                TradeStorage.saveTrades(this@MainActivity, tradeList) // Persist
                             }
                         },
                         modifier = Modifier.padding(innerPadding)
@@ -101,4 +78,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
