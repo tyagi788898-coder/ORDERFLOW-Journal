@@ -251,7 +251,7 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Strategy Selector Buttons with Top-Right Pencil Icon
+        // Clean Strategy Buttons with Clean Edit Badges
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -282,13 +282,12 @@ fun JournalChecklistScreen(
                                 color = if (isSelected) Color.White else subTextColor,
                                 fontWeight = FontWeight.Bold
                             )
-                            // Pencil Icon Inside Top-Right Corner
                             Text(
-                                text = "✏️",
-                                fontSize = 9.sp,
+                                text = "⚙️",
+                                fontSize = 8.sp,
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .padding(top = 2.dp, end = 4.dp)
+                                    .padding(top = 2.dp, end = 3.dp)
                             )
                         }
                     }
@@ -300,14 +299,14 @@ fun JournalChecklistScreen(
                             shadowElevation = 6.dp,
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .offset(y = (-45).dp)
+                                .offset(y = (-40).dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "✏️ Edit Strategy",
+                                    text = "Edit",
                                     color = Color(0xFFFFC107),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
@@ -316,10 +315,11 @@ fun JournalChecklistScreen(
                                             editingStrategyIndex = index
                                             showEditMenuForStrategy = null
                                         }
-                                        .padding(end = 8.dp)
+                                        .padding(end = 6.dp)
                                 )
                                 Text(
-                                    text = "❌",
+                                    text = "✕",
+                                    color = Color.Gray,
                                     fontSize = 10.sp,
                                     modifier = Modifier.clickable {
                                         showEditMenuForStrategy = null
@@ -570,7 +570,7 @@ fun JournalChecklistScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "✏️ Edit Strategy ${stratIdx + 1}",
+                        text = "⚙️ Edit Strategy ${stratIdx + 1}",
                         color = Color(0xFFFFC107),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
