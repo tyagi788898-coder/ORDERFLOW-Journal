@@ -2,12 +2,13 @@ package com.institutional.tradingjournal.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,11 @@ fun DashboardScreen(
     val winRate = if (totalTrades > 0) (wins * 100) / totalTrades else 0
     val totalPnl = tradeList.sumOf { it.pnlAmount }
 
+    val bestWin = tradeList.maxOfOrNull { it.pnlAmount } ?: 0.0
+    val worstLoss = tradeList.minOfOrNull { it.pnlAmount } ?: 0.0
+
+    var showAnalyticsModal by remember { mutableStateOf(false) }
+
     val scrollState = rememberScrollState()
 
     Column(
@@ -43,18 +49,36 @@ fun DashboardScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        Text(
-            text = "📈 Performance Dashboard",
-            color = Color(0xFFFFC107),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Real-time Orderflow Metrics",
-            color = subTextColor,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "📈 Performance Dashboard",
+                    color = Color(0xFFFFC107),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Real-time Orderflow Metrics",
+                    color = subTextColor,
+                    fontSize = 11.sp
+                )
+            }
+
+            Button(
+                onClick = { showAnalyticsModal = true },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1D28)),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text("📅 Analytics", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -121,7 +145,7 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Cumulative Performance Equity Graph
+        // Cumulative Equity Growth Curve
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
@@ -192,6 +216,63 @@ fun DashboardScreen(
                 }
             }
         }
+    }
+
+    if (showAnalyticsModal) {
+        val groupedByDate = tradeList.groupBy { it.date }
+
+        AlertDialog(
+            onDismissRequest = { showAnalyticsModal = false },
+            containerColor = cardBg,
+            title = {
+                Text("📅 Calendar & Analytics Overview", color = Color(0xFFFFC107), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D28)), modifier = Modifier.weight(1f).padding(end = 4.dp)) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("Best Win", color = Color.Gray, fontSize = 10.sp)
+                                Text("+$${bestWin}", color = Color(0xFF00E676), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D28)), modifier = Modifier.weight(1f).padding(start = 4.dp)) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("Worst Loss", color = Color.Gray, fontSize = 10.sp)
+                                Text("$${worstLoss}", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+                    }
+
+                    Text("Daily Breakdown:", color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
+
+                    if (groupedByDate.isEmpty()) {
+                        Text("No daily trade history available.", color = subTextColor, fontSize = 11.sp)
+                    } else {
+                        groupedByDate.forEach { (date, trades) ->
+                            val dailyPnl = trades.sumOf { it.pnlAmount }
+                            val dailyColor = if (dailyPnl >= 0) Color(0xFF00E676) else Color(0xFFD32F2F)
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("$date (${trades.size} trades)", color = textColor, fontSize = 12.sp)
+                                Text(if (dailyPnl >= 0) "+$$dailyPnl" else "-$$${kotlin.math.abs(dailyPnl)}", color = dailyColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showAnalyticsModal = false }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))) {
+                    Text("CLOSE", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 
