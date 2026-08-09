@@ -128,7 +128,7 @@ fun CalendarAnalyticsScreens(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "✏️ Edit",
+                                text = "⚙️ Edit",
                                 color = Color(0xFFFFC107),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -159,7 +159,7 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // Edit Trade Dialog with Status Selector
+    // Edit Trade Dialog with Fixed Height Input Field
     editingTrade?.let { trade ->
         var statusExpanded by remember { mutableStateOf(false) }
 
@@ -168,7 +168,7 @@ fun CalendarAnalyticsScreens(
             containerColor = cardBg,
             title = {
                 Text(
-                    text = "✏️ Edit Trade Log",
+                    text = "⚙️ Edit Trade Log",
                     color = Color(0xFFFFC107),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -180,6 +180,11 @@ fun CalendarAnalyticsScreens(
                     OutlinedTextField(
                         value = newPair,
                         onValueChange = { newPair = it },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = Color(0xFFFFC107)
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -189,6 +194,11 @@ fun CalendarAnalyticsScreens(
                     OutlinedTextField(
                         value = newSession,
                         onValueChange = { newSession = it },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = Color(0xFFFFC107)
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -225,7 +235,18 @@ fun CalendarAnalyticsScreens(
                     OutlinedTextField(
                         value = newPnlText,
                         onValueChange = { newPnlText = it },
-                        modifier = Modifier.fillMaxWidth()
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = Color(0xFFFFC107),
+                            unfocusedBorderColor = Color.Gray,
+                            focusedContainerColor = Color(0xFF1A1D28),
+                            unfocusedContainerColor = Color(0xFF1A1D28)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
                     )
                 }
             },
@@ -253,3 +274,4 @@ fun CalendarAnalyticsScreens(
         )
     }
 }
+
