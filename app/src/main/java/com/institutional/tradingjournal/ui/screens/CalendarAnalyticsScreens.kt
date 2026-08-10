@@ -34,6 +34,11 @@ fun CalendarAnalyticsScreens(
     var viewingTrade by remember { mutableStateOf<TradeEntry?>(null) }
     var reviewingTrade by remember { mutableStateOf<TradeEntry?>(null) }
 
+    var statusChangingTrade by remember { mutableStateOf<TradeEntry?>(null) }
+    var showPnlInputDialog by remember { mutableStateOf(false) }
+    var targetStatus by remember { mutableStateOf("WIN") }
+    var tempPnlText by remember { mutableStateOf("") }
+
     var mistakeText by remember { mutableStateOf("") }
     var learningText by remember { mutableStateOf("") }
 
@@ -85,7 +90,7 @@ fun CalendarAnalyticsScreens(
                     Column(
                         modifier = Modifier.padding(14.dp)
                     ) {
-                        // Clickable Upper Trade Box Area (Red Box Area in Screenshot)
+                        // Clickable Trade Details Header
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -115,14 +120,38 @@ fun CalendarAnalyticsScreens(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(text = "Date: ${trade.date}", color = subTextColor, fontSize = 11.sp)
-                                Text(text = "Status: ${trade.result}", color = Color(0xFFFFC107), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+
+                                // Status Clickable Button (Red Box Target)
+                                Surface(
+                                    color = Color(0xFF1A1D28),
+                                    shape = RoundedCornerShape(6.dp),
+                                    modifier = Modifier.clickable { statusChangingTrade = trade }
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Status: ",
+                                            color = subTextColor,
+                                            fontSize = 11.sp
+                                        )
+                                        Text(
+                                            text = trade.result.uppercase(),
+                                            color = Color(0xFFFFC107),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -131,7 +160,7 @@ fun CalendarAnalyticsScreens(
                             color = Color(0xFF2A2E3D)
                         )
 
-                        // Action Buttons: Edit (Mistake/Learning Review) & Delete
+                        // Bottom Actions: Edit Notes & Delete
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End,
@@ -167,7 +196,115 @@ fun CalendarAnalyticsScreens(
         }
     }
 
-    // 1. Read-Only Detailed Trade View Modal
+    // Status Change Pop-Up Selector Dialog
+    statusChangingTrade?.let { trade ->
+        AlertDialog(
+            onDismissRequest = { statusChangingTrade = null },
+            containerColor = cardBg,
+            title = {
+                Text(
+                    text = "🎯 Update Trade Status",
+                    color = Color(0xFFFFC107),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("PENDING", "WIN", "LOSS", "BREAKEVEN").forEach { statusOption ->
+                        Surface(
+                            color = if (trade.result.equals(statusOption, true)) Color(0xFF2A2E3D) else Color(0xFF1A1D28),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (statusOption == "WIN" || statusOption == "LOSS") {
+                                        targetStatus = statusOption
+                                        tempPnlText = ""
+                                        showPnlInputDialog = true
+                                    } else if (statusOption == "BREAKEVEN") {
+                                        onStatusUpdate(trade, "BREAKEVEN", 0.0, trade.pair, trade.session)
+                                        statusChangingTrade = null
+                                        Toast.makeText(context, "Status Updated to BREAKEVEN", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        onStatusUpdate(trade, "PENDING", 0.0, trade.pair, trade.session)
+                                        statusChangingTrade = null
+                                        Toast.makeText(context, "Status Updated to PENDING", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                        ) {
+                            Text(
+                                text = statusOption,
+                                color = if (statusOption == "WIN") Color(0xFF00E676) else if (statusOption == "LOSS") Color(0xFFD32F2F) else Color(0xFFFFC107),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { statusChangingTrade = null }) {
+                    Text("CANCEL", color = Color.Gray)
+                }
+            }
+        )
+    }
+
+    // PnL Amount Dialog after WIN/LOSS Selection
+    if (showPnlInputDialog && statusChangingTrade != null) {
+        val activeTrade = statusChangingTrade!!
+        AlertDialog(
+            onDismissRequest = { showPnlInputDialog = false },
+            containerColor = cardBg,
+            title = {
+                Text(
+                    text = if (targetStatus == "WIN") "🎉 Log WIN Amount" else "📉 Log LOSS Amount",
+                    color = if (targetStatus == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text("Enter $targetStatus Amount ($):", color = subTextColor, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = tempPnlText,
+                        onValueChange = { tempPnlText = it },
+                        placeholder = { Text("e.g. 250") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = if (targetStatus == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val absAmount = tempPnlText.toDoubleOrNull() ?: 0.0
+                        val finalPnl = if (targetStatus == "WIN") absAmount else -absAmount
+                        onStatusUpdate(activeTrade, targetStatus, finalPnl, activeTrade.pair, activeTrade.session)
+                        showPnlInputDialog = false
+                        statusChangingTrade = null
+                        Toast.makeText(context, "Status & PnL Updated!", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (targetStatus == "WIN") Color(0xFF00E676) else Color(0xFFD32F2F)
+                    )
+                ) {
+                    Text("SAVE AMOUNT", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    // Read-Only Trade Details View
     viewingTrade?.let { trade ->
         AlertDialog(
             onDismissRequest = { viewingTrade = null },
@@ -178,18 +315,8 @@ fun CalendarAnalyticsScreens(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "📋 Full Trade Details",
-                        color = Color(0xFFFFC107),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "✕",
-                        color = Color.Gray,
-                        fontSize = 16.sp,
-                        modifier = Modifier.clickable { viewingTrade = null }
-                    )
+                    Text("📋 Full Trade Details", color = Color(0xFFFFC107), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("✕", color = Color.Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewingTrade = null })
                 }
             },
             text = {
@@ -198,40 +325,30 @@ fun CalendarAnalyticsScreens(
                     Text("Session: ${trade.session}", color = textColor, fontSize = 13.sp)
                     Text("Date: ${trade.date}", color = subTextColor, fontSize = 12.sp)
                     Text("Strategy: ${trade.strategy}", color = Color(0xFFFFC107), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text("Checklist Completion: ${trade.scorePercentage}%", color = Color(0xFF00E676), fontSize = 12.sp)
+                    Text("Checklist Score: ${trade.scorePercentage}%", color = Color(0xFF00E676), fontSize = 12.sp)
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     HorizontalDivider(color = Color(0xFF2A2E3D))
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text("❌ Mistake Note:", color = Color(0xFFFF5252), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = if (trade.mistake.isNotBlank()) trade.mistake else "No mistake noted.",
-                        color = if (trade.mistake.isNotBlank()) textColor else subTextColor,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    Text(if (trade.mistake.isNotBlank()) trade.mistake else "No mistake noted.", color = textColor, fontSize = 12.sp)
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text("💡 Learning Note:", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = if (trade.learning.isNotBlank()) trade.learning else "No learning noted.",
-                        color = if (trade.learning.isNotBlank()) textColor else subTextColor,
-                        fontSize = 12.sp
-                    )
+                    Text(if (trade.learning.isNotBlank()) trade.learning else "No learning noted.", color = textColor, fontSize = 12.sp)
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = { viewingTrade = null },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
-                ) {
+                Button(onClick = { viewingTrade = null }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))) {
                     Text("CLOSE", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )
     }
 
-    // 2. Trade Review (Mistake & Learning Edit Modal)
+    // Edit Review Modal (Mistake & Learning)
     reviewingTrade?.let { trade ->
         AlertDialog(
             onDismissRequest = { reviewingTrade = null },
@@ -242,29 +359,15 @@ fun CalendarAnalyticsScreens(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "📝 Trade Review",
-                        color = Color(0xFFFFC107),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Surface(
-                        color = Color(0xFF1A1D28),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "After Trade",
-                            color = Color(0xFF00E676),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                    Text("📝 Trade Review", color = Color(0xFFFFC107), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Surface(color = Color(0xFF1A1D28), shape = RoundedCornerShape(12.dp)) {
+                        Text("After Trade", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                     }
                 }
             },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(text = "❌ Mistake", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("❌ Mistake", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = mistakeText,
@@ -280,9 +383,9 @@ fun CalendarAnalyticsScreens(
                         modifier = Modifier.fillMaxWidth().height(100.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = "💡 Learning", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("💡 Learning", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = learningText,
@@ -306,7 +409,7 @@ fun CalendarAnalyticsScreens(
                         trade.learning = learningText
                         onStatusUpdate(trade, trade.result, trade.pnlAmount, trade.pair, trade.session)
                         reviewingTrade = null
-                        Toast.makeText(context, "Trade Review Saved!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Review Saved!", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
                 ) {
