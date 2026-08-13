@@ -33,13 +33,15 @@ object UserPreferences {
 
     fun getUserName(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(KEY_USER_NAME, "")
-        if (!saved.isNullConfigurationsOrBlank()) return saved
+        val saved = prefs.getString(KEY_USER_NAME, null)
+        
+        if (!saved.isNullOrEmpty()) {
+            return saved
+        }
+        
         val randomNum = (1000..9999).random()
         val defaultName = "Trader_$randomNum"
         setUserName(context, defaultName)
         return defaultName
     }
-
-    private fun String?.isNullConfigurationsOrBlank(): Boolean = this.isNullOrBlank()
 }
