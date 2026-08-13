@@ -1,7 +1,9 @@
-
 package com.institutional.tradingjournal.ui.screens
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,9 +24,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
+import com.institutional.tradingjournal.GoogleAuthHelper
 import com.institutional.tradingjournal.UserPreferences
 
-// Web Client ID from Firebase
 const val GOOGLE_WEB_CLIENT_ID = "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com"
 
 // 1. Welcome Screen
@@ -152,7 +156,7 @@ fun WelcomeScreen(
     }
 }
 
-// 2. Login Screen (Phone Login Removed, Google Full Width)
+// 2. Login Screen (Real Google Sign-In Integrated)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -166,6 +170,23 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val userEmail = account?.email ?: "google_user@trade.com"
+                UserPreferences.setLoggedIn(context, true, userEmail)
+                Toast.makeText(context, "Logged in as $userEmail", Toast.LENGTH_SHORT).show()
+                onLoginSuccess()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val scrollState = rememberScrollState()
 
@@ -311,7 +332,7 @@ fun LoginScreen(
             HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF2A2E3D))
         }
 
-        // Full Width Google Button
+        // Real Google Account Chooser Launcher
         Surface(
             color = inputBg,
             shape = RoundedCornerShape(12.dp),
@@ -319,8 +340,8 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(52.dp)
                 .clickable {
-                    UserPreferences.setLoggedIn(context, true, "google_user@trade.com")
-                    onLoginSuccess()
+                    val signInIntent = GoogleAuthHelper.getSignInIntent(context, GOOGLE_WEB_CLIENT_ID)
+                    googleSignInLauncher.launch(signInIntent)
                 }
         ) {
             Row(
@@ -351,7 +372,7 @@ fun LoginScreen(
     }
 }
 
-// 3. Signup Screen
+// 3. Signup Screen (Real Google Sign-In Integrated)
 @Composable
 fun SignupScreen(
     onSignupSuccess: () -> Unit,
@@ -365,6 +386,23 @@ fun SignupScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val userEmail = account?.email ?: "google_signup@trade.com"
+                UserPreferences.setLoggedIn(context, true, userEmail)
+                Toast.makeText(context, "Account created with $userEmail", Toast.LENGTH_SHORT).show()
+                onSignupSuccess()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Google Signup failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val scrollState = rememberScrollState()
 
@@ -482,6 +520,7 @@ fun SignupScreen(
             HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF2A2E3D))
         }
 
+        // Real Google Account Chooser Launcher
         Surface(
             color = inputBg,
             shape = RoundedCornerShape(12.dp),
@@ -489,8 +528,8 @@ fun SignupScreen(
                 .fillMaxWidth()
                 .height(52.dp)
                 .clickable {
-                    UserPreferences.setLoggedIn(context, true, "google_signup@trade.com")
-                    onSignupSuccess()
+                    val signInIntent = GoogleAuthHelper.getSignInIntent(context, GOOGLE_WEB_CLIENT_ID)
+                    googleSignInLauncher.launch(signInIntent)
                 }
         ) {
             Row(
