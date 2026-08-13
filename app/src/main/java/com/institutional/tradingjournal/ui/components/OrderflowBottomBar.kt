@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -16,7 +17,6 @@ fun OrderflowBottomBar(
     currentRoute: String,
     onNavigate: (String) -> Unit
 ) {
-    // Hide bottom bar for Splash and Auth screens
     if (currentRoute == Screen.Splash.route || 
         currentRoute == Screen.Welcome.route || 
         currentRoute == Screen.Login.route || 
@@ -32,7 +32,8 @@ fun OrderflowBottomBar(
         val items = listOf(
             Triple(Screen.Dashboard.route, "Dashboard", Icons.Default.Dashboard),
             Triple(Screen.Journal.route, "Journal", Icons.Default.Book),
-            Triple(Screen.History.route, "History", Icons.Default.History)
+            Triple(Screen.History.route, "History", Icons.Default.History),
+            Triple(Screen.Settings.route, "Settings", Icons.Default.Settings)
         )
 
         items.forEach { (route, label, icon) ->
