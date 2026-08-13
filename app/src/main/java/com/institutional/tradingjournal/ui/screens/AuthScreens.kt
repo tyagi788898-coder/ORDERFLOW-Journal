@@ -1,8 +1,8 @@
+
 package com.institutional.tradingjournal.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.institutional.tradingjournal.UserPreferences
 
-// 1. Welcome Screen (Screenshot 3 Matching)
+// Web Client ID from Firebase
+const val GOOGLE_WEB_CLIENT_ID = "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com"
+
+// 1. Welcome Screen
 @Composable
 fun WelcomeScreen(
     onNavigateToSignup: () -> Unit,
@@ -42,7 +45,6 @@ fun WelcomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // App Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -67,7 +69,6 @@ fun WelcomeScreen(
             )
         }
 
-        // Center Illustration Circle
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -97,7 +98,6 @@ fun WelcomeScreen(
             )
         }
 
-        // Action Buttons
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -152,7 +152,7 @@ fun WelcomeScreen(
     }
 }
 
-// 2. Login Screen (Screenshot 1 Matching)
+// 2. Login Screen (Phone Login Removed, Google Full Width)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -179,7 +179,6 @@ fun LoginScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Top Header
         Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(
                 color = Color(0xFF1E2638),
@@ -214,7 +213,6 @@ fun LoginScreen(
             modifier = Modifier.padding(top = 4.dp, bottom = 32.dp)
         )
 
-        // Email Field
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -235,7 +233,6 @@ fun LoginScreen(
                 .padding(bottom = 16.dp)
         )
 
-        // Password Field
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -279,7 +276,6 @@ fun LoginScreen(
             )
         }
 
-        // Login Button
         Button(
             onClick = {
                 if (email.isNotBlank() && password.isNotBlank()) {
@@ -304,7 +300,6 @@ fun LoginScreen(
             )
         }
 
-        // OR Divider
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -316,51 +311,26 @@ fun LoginScreen(
             HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF2A2E3D))
         }
 
-        // Social Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        // Full Width Google Button
+        Surface(
+            color = inputBg,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .clickable {
+                    UserPreferences.setLoggedIn(context, true, "google_user@trade.com")
+                    onLoginSuccess()
+                }
         ) {
-            Surface(
-                color = inputBg,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .clickable {
-                        UserPreferences.setLoggedIn(context, true, "google_user@trade.com")
-                        onLoginSuccess()
-                    }
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🔴 ", fontSize = 14.sp)
-                    Text("Google", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            Surface(
-                color = inputBg,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .clickable {
-                        UserPreferences.setLoggedIn(context, true, "phone_user@trade.com")
-                        onLoginSuccess()
-                    }
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("📱 ", fontSize = 14.sp)
-                    Text("Phone", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
+                Text("🔴 ", fontSize = 16.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Continue with Google", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -381,7 +351,7 @@ fun LoginScreen(
     }
 }
 
-// 3. Signup Screen (Screenshot 2 Matching)
+// 3. Signup Screen
 @Composable
 fun SignupScreen(
     onSignupSuccess: () -> Unit,
@@ -517,7 +487,7 @@ fun SignupScreen(
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(52.dp)
                 .clickable {
                     UserPreferences.setLoggedIn(context, true, "google_signup@trade.com")
                     onSignupSuccess()
@@ -528,8 +498,9 @@ fun SignupScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("🔴 ", fontSize = 14.sp)
-                Text("Continue with Google", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("🔴 ", fontSize = 16.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Continue with Google", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
 
