@@ -2,18 +2,19 @@ package com.institutional.tradingjournal.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.institutional.tradingjournal.UserPreferences
 import com.institutional.tradingjournal.model.TradeEntry
-import com.institutional.tradingjournal.ui.screens.CalendarAnalyticsScreens
-import com.institutional.tradingjournal.ui.screens.DashboardScreen
-import com.institutional.tradingjournal.ui.screens.JournalChecklistScreen
-import com.institutional.tradingjournal.ui.screens.SettingsScreen
-import com.institutional.tradingjournal.ui.screens.SplashScreen
+import com.institutional.tradingjournal.ui.screens.*
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
+    object Welcome : Screen("welcome")
+    object Login : Screen("login")
+    object Signup : Screen("signup")
     object Dashboard : Screen("dashboard")
     object Journal : Screen("journal")
     object History : Screen("history")
@@ -31,6 +32,8 @@ fun OrderflowNavGraph(
     onStatusUpdate: (TradeEntry, String, Double, String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
@@ -39,10 +42,41 @@ fun OrderflowNavGraph(
         composable(Screen.Splash.route) {
             SplashScreen(
                 onLoadingComplete = {
-                    navController.navigate(Screen.Dashboard.route) {
+                    val isLoggedIn = UserPreferences.isLoggedIn(context)
+                    val targetRoute = if (isLoggedIn) Screen.Dashboard.route else Screen.Welcome.route
+                    navController.navigate(targetRoute) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Screen.Welcome.route) {
+            WelcomeScreen(
+                onNavigateToSignup = { navController.navigate(Screen.Signup.route) },
+                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+            )
+        }
+
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
+                },
+                onNavigateToSignup = { navController.navigate(Screen.Signup.route) }
+            )
+        }
+
+        composable(Screen.Signup.route) {
+            SignupScreen(
+                onSignupSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
             )
         }
 
