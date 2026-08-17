@@ -2,12 +2,9 @@ package com.institutional.tradingjournal.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.institutional.tradingjournal.UserPreferences
-import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.screens.*
 
 sealed class Screen(val route: String) {
@@ -19,21 +16,18 @@ sealed class Screen(val route: String) {
     object Journal : Screen("journal")
     object History : Screen("history")
     object Settings : Screen("settings")
+    object Calendar : Screen("calendar")
+    object Analytics : Screen("analytics")
+    object StrategyManager : Screen("strategy_manager")
 }
 
 @Composable
 fun OrderflowNavGraph(
     navController: NavHostController,
-    isDark: Boolean,
-    onToggleTheme: (Boolean) -> Unit,
-    tradeList: List<TradeEntry>,
-    onTradeLogged: (TradeEntry) -> Unit,
-    onDeleteTrade: (TradeEntry) -> Unit,
-    onStatusUpdate: (TradeEntry, String, Double, String, String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDark: Boolean = true,
+    onToggleTheme: (Boolean) -> Unit = {}
 ) {
-    val context = LocalContext.current
-
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
@@ -41,10 +35,13 @@ fun OrderflowNavGraph(
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
-                onLoadingComplete = {
-                    val isLoggedIn = UserPreferences.isLoggedIn(context)
-                    val targetRoute = if (isLoggedIn) Screen.Dashboard.route else Screen.Welcome.route
-                    navController.navigate(targetRoute) {
+                onNavigateToWelcome = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
@@ -82,25 +79,18 @@ fun OrderflowNavGraph(
 
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                isDark = isDark,
-                tradeList = tradeList
+                onNavigateToCalendar = { navController.navigate(Screen.Calendar.route) },
+                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
+                onNavigateToStrategyManager = { navController.navigate(Screen.StrategyManager.route) }
             )
         }
 
         composable(Screen.Journal.route) {
-            JournalChecklistScreen(
-                isDark = isDark,
-                onTradeLogged = onTradeLogged
-            )
+            JournalChecklistScreen()
         }
 
         composable(Screen.History.route) {
-            CalendarAnalyticsScreens(
-                isDark = isDark,
-                tradeList = tradeList,
-                onDeleteTrade = onDeleteTrade,
-                onStatusUpdate = onStatusUpdate
-            )
+            HistoryScreen()
         }
 
         composable(Screen.Settings.route) {
@@ -108,6 +98,18 @@ fun OrderflowNavGraph(
                 isDark = isDark,
                 onToggleTheme = onToggleTheme
             )
+        }
+
+        composable(Screen.Calendar.route) {
+            CalendarScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Analytics.route) {
+            AnalyticsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.StrategyManager.route) {
+            StrategyManagerScreen(onBack = { navController.popBackStack() })
         }
     }
 }
