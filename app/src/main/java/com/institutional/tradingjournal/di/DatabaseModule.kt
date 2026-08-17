@@ -18,15 +18,14 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(
-        @ApplicationContext context: Context
-    ): AppDatabase {
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "orderflow_v7_db"
-        ).fallbackToDestructiveMigration()
-         .build()
+            "orderflow_journal_db"
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
@@ -39,4 +38,3 @@ object DatabaseModule {
         return database.strategyDao()
     }
 }
-
