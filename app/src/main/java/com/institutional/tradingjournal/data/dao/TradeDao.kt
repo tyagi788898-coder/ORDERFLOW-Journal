@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TradeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTrade(trade: TradeEntity): Long
+    suspend fun insertTrade(trade: TradeEntity)
 
     @Update
     suspend fun updateTrade(trade: TradeEntity)
@@ -15,16 +15,9 @@ interface TradeDao {
     @Delete
     suspend fun deleteTrade(trade: TradeEntity)
 
-    @Query("SELECT * FROM trades ORDER BY timestamp DESC")
+    @Query("SELECT * FROM trades WHERE email = :email ORDER BY id DESC")
+    fun getTradesByEmail(email: String): Flow<List<TradeEntity>>
+
+    @Query("SELECT * FROM trades ORDER BY id DESC")
     fun getAllTrades(): Flow<List<TradeEntity>>
-
-    @Query("SELECT * FROM trades WHERE id = :id")
-    suspend fun getTradeById(id: Long): TradeEntity?
-
-    @Query("SELECT SUM(pnl) FROM trades")
-    fun getTotalPnL(): Flow<Double?>
-
-    @Query("SELECT COUNT(*) FROM trades")
-    fun getTotalTradesCount(): Flow<Int>
 }
-
