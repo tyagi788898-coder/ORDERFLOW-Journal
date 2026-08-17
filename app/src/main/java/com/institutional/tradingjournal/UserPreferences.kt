@@ -3,45 +3,21 @@ package com.institutional.tradingjournal
 import android.content.Context
 
 object UserPreferences {
-    private const val PREFS_NAME = "trade_journal_user_prefs"
-    private const val KEY_IS_LOGGED_IN = "is_logged_in"
+    private const val PREFS_NAME = "orderflow_prefs"
     private const val KEY_USER_EMAIL = "user_email"
     private const val KEY_USER_NAME = "user_name"
+    private const val KEY_LOGGED_IN = "is_logged_in"
 
-    fun setLoggedIn(context: Context, isLoggedIn: Boolean, email: String = "") {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putBoolean(KEY_IS_LOGGED_IN, isLoggedIn)
+    fun saveUser(context: Context, email: String, username: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
             .putString(KEY_USER_EMAIL, email)
+            .putString(KEY_USER_NAME, username)
+            .putBoolean(KEY_LOGGED_IN, true)
             .apply()
     }
 
-    fun isLoggedIn(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
-    }
-
-    fun getUserEmail(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_USER_EMAIL, "") ?: ""
-    }
-
-    fun setUserName(context: Context, name: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_USER_NAME, name).apply()
-    }
-
-    fun getUserName(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(KEY_USER_NAME, null)
-        
-        if (!saved.isNullOrEmpty()) {
-            return saved
-        }
-        
-        val randomNum = (1000..9999).random()
-        val defaultName = "Trader_$randomNum"
-        setUserName(context, defaultName)
-        return defaultName
-    }
+    fun getUserEmail(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_USER_EMAIL, "") ?: ""
+    fun getUserName(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_USER_NAME, "Trader") ?: "Trader"
+    fun setUserName(context: Context, name: String) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_USER_NAME, name).apply()
+    fun isLoggedIn(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getBoolean(KEY_LOGGED_IN, false)
 }
