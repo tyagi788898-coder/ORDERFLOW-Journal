@@ -35,13 +35,8 @@ fun OrderflowNavGraph(
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
-                onNavigateToWelcome = {
+                onLoadingComplete = {
                     navController.navigate(Screen.Welcome.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                },
-                onNavigateToDashboard = {
-                    navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
@@ -79,18 +74,17 @@ fun OrderflowNavGraph(
 
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onNavigateToCalendar = { navController.navigate(Screen.Calendar.route) },
-                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
-                onNavigateToStrategyManager = { navController.navigate(Screen.StrategyManager.route) }
+                isDark = isDark,
+                tradeList = emptyList()
             )
         }
 
         composable(Screen.Journal.route) {
-            JournalChecklistScreen()
+            JournalChecklistScreen(isDark = isDark)
         }
 
         composable(Screen.History.route) {
-            HistoryScreen()
+            HistoryScreen(isDark = isDark)
         }
 
         composable(Screen.Settings.route) {
@@ -101,15 +95,15 @@ fun OrderflowNavGraph(
         }
 
         composable(Screen.Calendar.route) {
-            CalendarScreen(onBack = { navController.popBackStack() })
+            CalendarScreen(isDark = isDark)
         }
 
         composable(Screen.Analytics.route) {
-            AnalyticsScreen(onBack = { navController.popBackStack() })
+            AnalyticsScreen(isDark = isDark)
         }
 
         composable(Screen.StrategyManager.route) {
-            StrategyManagerScreen(onBack = { navController.popBackStack() })
+            StrategyManagerScreen()
         }
     }
 }
