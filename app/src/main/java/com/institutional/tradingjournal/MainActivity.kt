@@ -5,14 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
 import com.institutional.tradingjournal.ui.navigation.OrderflowNavGraph
-import com.institutional.tradingjournal.ui.theme.TradingJournalTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +26,21 @@ class MainActivity : ComponentActivity() {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route ?: ""
 
-            TradingJournalTheme(darkTheme = isDarkTheme) {
+            val colorScheme = if (isDarkTheme) {
+                darkColorScheme(
+                    background = Color(0xFF090A0F),
+                    surface = Color(0xFF12141C),
+                    primary = Color(0xFFFFC107)
+                )
+            } else {
+                lightColorScheme(
+                    background = Color(0xFFF4F6F9),
+                    surface = Color.White,
+                    primary = Color(0xFF1976D2)
+                )
+            }
+
+            MaterialTheme(colorScheme = colorScheme) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
