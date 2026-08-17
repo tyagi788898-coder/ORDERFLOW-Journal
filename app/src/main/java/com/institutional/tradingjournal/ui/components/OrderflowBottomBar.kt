@@ -17,11 +17,8 @@ fun OrderflowBottomBar(
     currentRoute: String,
     onNavigate: (String) -> Unit
 ) {
-    if (currentRoute == Screen.Splash.route || 
-        currentRoute == Screen.Welcome.route || 
-        currentRoute == Screen.Login.route || 
-        currentRoute == Screen.Signup.route
-    ) {
+    // Hide bottom bar on auth screens
+    if (currentRoute == "splash" || currentRoute == "welcome" || currentRoute == "login" || currentRoute == "signup") {
         return
     }
 
