@@ -3,47 +3,54 @@ package com.institutional.tradingjournal.data.repository
 import com.institutional.tradingjournal.data.entity.StrategyEntity
 
 object DefaultStrategies {
-    val list = listOf(
+    fun getList(email: String = ""): List<StrategyEntity> = listOf(
         StrategyEntity(
             id = 1,
-            name = "Strategy 1 – Liquidity Cluster Counter Attack",
-            description = "High probability reversal trade off VAL/VAH clusters and POC virgin levels.",
-            colorHex = "#22C55E", // Green Accent
-            iconName = "Star",
-            checklistItems = "📍 Price at VAL / VAH or Virgin POC|🟨 Strong Heatmap Limit Order Wall|🫧 Huge Bubble + Price Freeze|🦵 Extreme BID/ASK = 0|⚖️ 300%+ Diagonal Imbalance|📈 Delta Reversal Confirmed|🎯 Entry Executed|🛡️ SL Correct|🏁 TP (RR ≥ 1:3)",
+            email = email,
+            name = "Orderflow Imbalance",
+            description = "Trading stacked imbalances at key support/resistance zones.",
+            colorHex = "#1976D2",
+            iconName = "trending_up",
+            checklistItems = "Delta Confirmation,Volume Spike,Key Level Rejection",
             scoreWeight = 100,
-            isDefault = true
+            isDefault = true,
+            isActive = true
         ),
         StrategyEntity(
             id = 2,
-            name = "Strategy 2 – All Weather Sniper",
-            description = "Multi-confluence institutional setup using Footprint & Heatmap dynamics.",
-            colorHex = "#EF4444", // Red Accent
-            iconName = "Target",
-            checklistItems = "📊 SVP Value Area Confluence|🟨 Heatmap Liquidity Absorption|🫧 Footprint Delta Cluster|🎯 Entry Executed|🛡️ SL Correct|🏁 TP (RR ≥ 1:3)",
+            email = email,
+            name = "Absorption Reversal",
+            description = "High volume with little price movement showing institutional absorption.",
+            colorHex = "#388E3C",
+            iconName = "swap_horiz",
+            checklistItems = "Delta Divergence,Exhaustion Volume,Pin Bar at Level",
             scoreWeight = 100,
-            isDefault = true
+            isDefault = true,
+            isActive = true
         ),
         StrategyEntity(
             id = 3,
-            name = "Strategy 3 – Asian Range Rejection",
-            description = "Liquidity sweep and trap inside Asian Session VAH/VAL limits.",
-            colorHex = "#3B82F6", // Blue Accent
-            iconName = "Globe",
-            checklistItems = "🌏 Asian Session Liquidity Sweep|🪤 Fakeout & Return Inside Range|🦵 Extreme Volume Divergence|🎯 Entry Executed|🛡️ SL Correct|🏁 TP (RR ≥ 1:3)",
+            email = email,
+            name = "Liquidity Sweep",
+            description = "False breakout above/below session highs/lows trapping retail breakout traders.",
+            colorHex = "#F57C00",
+            iconName = "flash_on",
+            checklistItems = "Previous High/Low Swept,Quick Rejection Close,Volume Climax",
             scoreWeight = 100,
-            isDefault = true
+            isDefault = true,
+            isActive = true
         ),
         StrategyEntity(
             id = 4,
-            name = "Strategy 4 – London Over Speed Expansion",
-            description = "Momentum expansion strategy following London open range breakouts.",
-            colorHex = "#EC4899", // Rocket/Pink Accent
-            iconName = "Rocket",
-            checklistItems = "🚀 London Open Volume Surge|📈 High Delta Expansion|🔄 Retest of Value Area|🎯 Entry Executed|🛡️ SL Correct|🏁 TP (RR ≥ 1:3)",
+            email = email,
+            name = "POC Retest (Point of Control)",
+            description = "Pullback to high volume node of previous profile for trend continuation.",
+            colorHex = "#7B1FA2",
+            iconName = "radar",
+            checklistItems = "Value Area Acceptance,POC Bounce,Trend Alignment",
             scoreWeight = 100,
-            isDefault = true
+            isDefault = true,
+            isActive = true
         )
     )
 }
-
