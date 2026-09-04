@@ -22,19 +22,9 @@ android {
         }
     }
 
-    signingConfigs {
-        getByName("debug") {
-            // Consistent debug signing keeps signature valid for continuous direct updates
-            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
-    }
-
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("debug")
+            // Android default debug signing automatically applies
         }
         release {
             isMinifyEnabled = false
