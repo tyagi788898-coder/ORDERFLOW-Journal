@@ -1,13 +1,12 @@
 package com.institutional.tradingjournal.ui.screens
 
-import android.graphics.Bitmap
-import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +31,6 @@ fun SplashScreen(
     val context = LocalContext.current
     val alphaAnim = remember { Animatable(0f) }
 
-    // Dynamically retrieve application logo from package manager
     val appIconBitmap = remember(context) {
         try {
             val pm = context.packageManager
@@ -66,9 +64,10 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.alpha(alphaAnim.value)
         ) {
-            if (appIconBitmap != null) {
+            val bitmap = appIconBitmap
+            if (bitmap != null) {
                 Image(
-                    bitmap = appIconBitmap.asImageBitmap(),
+                    bitmap = bitmap.asImageBitmap(),
                     contentDescription = "Official App Logo",
                     modifier = Modifier
                         .size(100.dp)
@@ -80,8 +79,11 @@ fun SplashScreen(
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.size(100.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("📈", fontSize = 48.sp)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(text = "📈", fontSize = 48.sp)
                     }
                 }
             }
