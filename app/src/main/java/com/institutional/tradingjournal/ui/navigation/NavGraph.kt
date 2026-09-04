@@ -35,8 +35,13 @@ fun OrderflowNavGraph(
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
-                onLoadingComplete = {
+                onNavigateToWelcome = {
                     navController.navigate(Screen.Welcome.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
@@ -103,7 +108,7 @@ fun OrderflowNavGraph(
         }
 
         composable(Screen.StrategyManager.route) {
-            StrategyManagerScreen()
+            StrategyManagerScreen(isDark = isDark)
         }
     }
 }
