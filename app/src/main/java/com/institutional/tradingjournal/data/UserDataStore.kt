@@ -1,86 +1,70 @@
 package com.institutional.tradingjournal.data
 
 import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-
-data class UserAccount(
-    val email: String,
-    val passwordHash: String,
-    val username: String,
-    val createdAt: Long = System.currentTimeMillis()
-)
+import android.content.SharedPreferences
 
 object UserDataStore {
-    private const val PREFS_NAME = "orderflow_users_db"
-    private const val KEY_USERS = "registered_users_list"
-    private const val KEY_SESSION = "current_session_email"
-    private val gson = Gson()
+    private const val PREF_NAME = "orderflow_auth_secure_store"
+    private const val KEY_LOGGED_IN = "is_user_logged_in"
+    private const val KEY_CURRENT_USER = "current_session_user"
 
-    fun getAllUsers(context: Context): MutableMap<String, UserAccount> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val json = prefs.getString(KEY_USERS, null) ?: return mutableMapOf()
-        val type = object : TypeToken<MutableMap<String, UserAccount>>() {}.type
-        return try {
-            gson.fromJson(json, type) ?: mutableMapOf()
-        } catch (e: Exception) {
-            mutableMapOf()
-        }
+    private fun getPrefs(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
-    private fun saveUsers(context: Context, users: Map<String, UserAccount>) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_USERS, gson.toJson(users)).apply()
-    }
-
-    fun registerUser(context: Context, email: String, password: String, username: String): Boolean {
+    fun registerUser(context: Context, email: String, pass: String, username: String): Boolean {
         val cleanEmail = email.trim().lowercase()
-        val users = getAllUsers(context)
-        if (users.containsKey(cleanEmail)) {
-            return false // User already exists
-        }
-        users[cleanEmail] = UserAccount(
-            email = cleanEmail,
-            passwordHash = password.trim(),
-            username = username.trim()
-        )
-        saveUsers(context, users)
-        setCurrentSession(context, cleanEmail)
+        val prefs = getPrefs(context)
+        
+        // Save user credentials
+        prefs.edit()
+            .putString("pwd_$cleanEmail", pass.trim())
+            .putString("name_$cleanEmail", username.trim())
+            .putBoolean(KEY_LOGGED_IN, true)
+            .putString(KEY_CURRENT_USER, cleanEmail)
+            .apply()
         return true
     }
 
-    fun authenticate(context: Context, email: String, password: String): Boolean {
+    fun authenticate(context: Context, email: String, pass: String): Boolean {
         val cleanEmail = email.trim().lowercase()
-        val users = getAllUsers(context)
-        val account = users[cleanEmail] ?: return false
-        return account.passwordHash == password.trim()
+        val prefs = getPrefs(context)
+        val savedPass = prefs.getString("pwd_$cleanEmail", null) ?: return false
+        val matched = savedPass == pass.trim()
+        if (matched) {
+            prefs.edit()
+                .putBoolean(KEY_LOGGED_IN, true)
+                .putString(KEY_CURRENT_USER, cleanEmail)
+                .apply()
+        }
+        return matched
     }
 
     fun userExists(context: Context, email: String): Boolean {
-        return getAllUsers(context).containsKey(email.trim().lowercase())
+        val cleanEmail = email.trim().lowercase()
+        return getPrefs(context).contains("pwd_$cleanEmail")
     }
 
-    fun resetPassword(context: Context, email: String, newPassword: String): Boolean {
+    fun resetPassword(context: Context, email: String, newPass: String): Boolean {
         val cleanEmail = email.trim().lowercase()
-        val users = getAllUsers(context)
-        val account = users[cleanEmail] ?: return false
-        users[cleanEmail] = account.copy(passwordHash = newPassword.trim())
-        saveUsers(context, users)
+        val prefs = getPrefs(context)
+        if (!userExists(context, cleanEmail)) return false
+        prefs.edit().putString("pwd_$cleanEmail", newPass.trim()).apply()
         return true
     }
 
-    fun setCurrentSession(context: Context, email: String?) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_SESSION, email?.trim()?.lowercase() ?: "").apply()
+    fun getUsername(context: Context, email: String): String {
+        val cleanEmail = email.trim().lowercase()
+        return getPrefs(context).getString("name_$cleanEmail", "Trader") ?: "Trader"
     }
 
     fun getCurrentSession(context: Context): String? {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val session = prefs.getString(KEY_SESSION, "")
-        return if (session.isNullOrBlank()) null else session
+        val prefs = getPrefs(context)
+        val isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false)
+        return if (isLoggedIn) prefs.getString(KEY_CURRENT_USER, null) else null
     }
 
-    fun clearSession(context: Context) {
-        setCurrentSession(context, null)
+    fun logout(context: Context) {
+        getPrefs(context).edit().putBoolean(KEY_LOGGED_IN, false).remove(KEY_CURRENT_USER).apply()
     }
 }
