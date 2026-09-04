@@ -1,5 +1,7 @@
 package com.institutional.tradingjournal.ui.screens
 
+import android.graphics.Bitmap
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -7,20 +9,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.institutional.tradingjournal.R
+import androidx.core.graphics.drawable.toBitmap
 import com.institutional.tradingjournal.data.UserDataStore
 import kotlinx.coroutines.delay
 
@@ -31,6 +31,18 @@ fun SplashScreen(
 ) {
     val context = LocalContext.current
     val alphaAnim = remember { Animatable(0f) }
+
+    // Dynamically retrieve application logo from package manager
+    val appIconBitmap = remember(context) {
+        try {
+            val pm = context.packageManager
+            val appInfo = pm.getApplicationInfo(context.packageName, 0)
+            val iconDrawable = pm.getApplicationIcon(appInfo)
+            iconDrawable.toBitmap(200, 200)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     LaunchedEffect(Unit) {
         alphaAnim.animateTo(1f, animationSpec = tween(1000))
@@ -54,13 +66,25 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.alpha(alphaAnim.value)
         ) {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = "Official App Logo",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(20.dp))
-            )
+            if (appIconBitmap != null) {
+                Image(
+                    bitmap = appIconBitmap.asImageBitmap(),
+                    contentDescription = "Official App Logo",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                )
+            } else {
+                Surface(
+                    color = Color(0xFF1E2638),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.size(100.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("📈", fontSize = 48.sp)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
