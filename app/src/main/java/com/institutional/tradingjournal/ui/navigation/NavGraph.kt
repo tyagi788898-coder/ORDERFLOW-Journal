@@ -2,10 +2,12 @@ package com.institutional.tradingjournal.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.institutional.tradingjournal.ui.screens.*
+import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -28,6 +30,8 @@ fun OrderflowNavGraph(
     isDark: Boolean = true,
     onToggleTheme: (Boolean) -> Unit = {}
 ) {
+    val tradeViewModel: TradeViewModel = hiltViewModel()
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
@@ -85,11 +89,17 @@ fun OrderflowNavGraph(
         }
 
         composable(Screen.Journal.route) {
-            JournalChecklistScreen(isDark = isDark)
+            JournalChecklistScreen(
+                isDark = isDark,
+                tradeViewModel = tradeViewModel
+            )
         }
 
         composable(Screen.History.route) {
-            HistoryScreen(isDark = isDark)
+            HistoryScreen(
+                isDark = isDark,
+                viewModel = tradeViewModel
+            )
         }
 
         composable(Screen.Settings.route) {
