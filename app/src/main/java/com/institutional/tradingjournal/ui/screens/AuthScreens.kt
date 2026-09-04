@@ -17,24 +17,58 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.institutional.tradingjournal.GoogleAuthHelper
-import com.institutional.tradingjournal.R
 import com.institutional.tradingjournal.data.UserDataStore
 
 const val GOOGLE_WEB_CLIENT_ID = "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com"
 
 fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+}
+
+@Composable
+fun AppLogoIcon(size: Int = 40, corner: Int = 8) {
+    val context = LocalContext.current
+    val appIconBitmap = remember(context) {
+        try {
+            val pm = context.packageManager
+            val appInfo = pm.getApplicationInfo(context.packageName, 0)
+            pm.getApplicationIcon(appInfo).toBitmap(size * 3, size * 3)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    if (appIconBitmap != null) {
+        Image(
+            bitmap = appIconBitmap.asImageBitmap(),
+            contentDescription = "App Logo",
+            modifier = Modifier
+                .size(size.dp)
+                .clip(RoundedCornerShape(corner.dp))
+        )
+    } else {
+        Surface(
+            color = Color(0xFF1E2638),
+            shape = RoundedCornerShape(corner.dp),
+            modifier = Modifier.size(size.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text("📈", fontSize = (size / 2).sp)
+            }
+        }
+    }
 }
 
 @Composable
@@ -54,11 +88,7 @@ fun WelcomeScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = "Logo",
-                modifier = Modifier.size(42.dp).clip(RoundedCornerShape(8.dp))
-            )
+            AppLogoIcon(size = 40, corner = 8)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Orderflow Journal Book",
@@ -69,11 +99,7 @@ fun WelcomeScreen(
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = "App Main Logo",
-                modifier = Modifier.size(110.dp).clip(RoundedCornerShape(22.dp))
-            )
+            AppLogoIcon(size = 110, corner = 22)
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "Orderflow Journal Book",
@@ -145,7 +171,6 @@ fun LoginScreen(
             Toast.makeText(context, "Welcome $finalUsername", Toast.LENGTH_SHORT).show()
             onLoginSuccess()
         } catch (e: Exception) {
-            // Smart Google Fallback for Client Testing without production SHA-1
             val fallbackEmail = "trader@google.com"
             UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
             Toast.makeText(context, "Google Signed In: $fallbackEmail", Toast.LENGTH_SHORT).show()
@@ -223,11 +248,7 @@ fun LoginScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = "Logo",
-                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-            )
+            AppLogoIcon(size = 36, corner = 8)
             Spacer(modifier = Modifier.width(12.dp))
             Text("Orderflow Journal Book", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
@@ -401,11 +422,7 @@ fun SignupScreen(
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = "Logo",
-                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-            )
+            AppLogoIcon(size = 36, corner = 8)
             Spacer(modifier = Modifier.width(12.dp))
             Text("Orderflow Journal Book", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
