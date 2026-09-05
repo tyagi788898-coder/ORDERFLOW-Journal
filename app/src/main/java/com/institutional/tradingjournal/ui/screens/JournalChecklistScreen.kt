@@ -43,7 +43,7 @@ fun JournalChecklistScreen(
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    val currentEmail = UserDataStore.getCurrentSession(context) ?: ""
+    val currentEmail = UserDataStore.getCurrentSession(context) ?: "default_trader"
 
     val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
     val cardBg = if (isDark) Color(0xFF12141C) else Color.White
@@ -256,7 +256,6 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Clean Strategy Buttons Row (NO ICONS inside)
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -380,7 +379,7 @@ fun JournalChecklistScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LinearProgressIndicator(
-                    progress = progressPercentage / 100f,
+                    progress = { progressPercentage / 100f },
                     modifier = Modifier.fillMaxWidth().height(8.dp),
                     color = Color(0xFFFFC107),
                     trackColor = inputBg,
@@ -434,7 +433,9 @@ fun JournalChecklistScreen(
                 )
                 onTradeLogged(newEntry)
 
-                // Direct Room SQLite Insertion
+                // Save clean metadata into emotion field in standard format
+                val persistentMeta = "STATUS:$resultStatus | SCORE:$progressPercentage%"
+
                 tradeViewModel?.let { vm ->
                     val tradeRecord = TradeEntity(
                         email = currentEmail,
@@ -450,7 +451,7 @@ fun JournalChecklistScreen(
                         date = selectedDateText,
                         strategyName = currentStrategy.title,
                         session = session,
-                        emotion = "Score: $progressPercentage% | Status: $resultStatus"
+                        emotion = persistentMeta
                     )
                     vm.insertTrade(tradeRecord)
                 }
