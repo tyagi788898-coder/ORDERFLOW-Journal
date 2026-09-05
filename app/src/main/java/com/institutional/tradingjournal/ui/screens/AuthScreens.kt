@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.institutional.tradingjournal.GoogleAuthHelper
+import com.institutional.tradingjournal.R
 import com.institutional.tradingjournal.data.UserDataStore
 
 const val GOOGLE_WEB_CLIENT_ID = "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com"
@@ -38,23 +39,13 @@ fun isValidEmail(email: String): Boolean {
 
 @Composable
 fun AppLogoIcon(size: Int = 40, corner: Int = 8) {
-    val context = LocalContext.current
-    val iconResId = remember(context) {
-        val mipmapId = context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName)
-        if (mipmapId != 0) mipmapId else context.resources.getIdentifier("ic_launcher", "drawable", context.packageName)
-    }
-
-    if (iconResId != 0) {
-        Image(
-            painter = painterResource(id = iconResId),
-            contentDescription = "App Logo",
-            modifier = Modifier
-                .size(size.dp)
-                .clip(RoundedCornerShape(corner.dp))
-        )
-    } else {
-        Text("📈", fontSize = (size / 2).sp)
-    }
+    Image(
+        painter = painterResource(id = R.drawable.ic_launcher_logo),
+        contentDescription = "Official App Logo",
+        modifier = Modifier
+            .size(size.dp)
+            .clip(RoundedCornerShape(corner.dp))
+    )
 }
 
 @Composable
