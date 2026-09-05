@@ -2,11 +2,9 @@ package com.institutional.tradingjournal.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -31,15 +29,17 @@ import java.util.*
 @Composable
 fun DashboardScreen(
     isDark: Boolean = true,
+    tradeList: List<TradeEntity> = emptyList(),
     viewModel: TradeViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val currentEmail = UserDataStore.getCurrentSession(context) ?: ""
-    val allTrades by viewModel.allTrades.collectAsState(initial = emptyList())
+    val dbTrades by viewModel.allTrades.collectAsState(initial = emptyList())
 
-    val userTrades = remember(allTrades, currentEmail) {
-        if (currentEmail.isBlank()) allTrades
-        else allTrades.filter { it.email.equals(currentEmail, ignoreCase = true) || it.email == "default_trader" }
+    val sourceTrades = if (tradeList.isNotEmpty()) tradeList else dbTrades
+    val userTrades = remember(sourceTrades, currentEmail) {
+        if (currentEmail.isBlank()) sourceTrades
+        else sourceTrades.filter { it.email.equals(currentEmail, ignoreCase = true) || it.email == "default_trader" }
     }
 
     val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
@@ -97,7 +97,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Top Metrics Row
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -124,7 +123,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Total PnL Card
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
@@ -156,7 +154,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Cumulative Equity Growth Curve Card
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
@@ -208,7 +205,6 @@ fun EquityCurveChart(trades: List<TradeEntity>) {
         val height = size.height
         val midY = height / 2f
 
-        // Draw 0-line baseline
         drawLine(
             color = Color(0xFF2A2E3D),
             start = Offset(0f, midY),
@@ -249,11 +245,9 @@ fun AnalyticsCalendarDialog(
     var calendarMonth by remember { mutableStateOf(Calendar.getInstance()) }
     val currentMonthYear = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(calendarMonth.time)
 
-    // Calculate best win and worst loss
     val bestWin = trades.filter { it.pnl > 0 }.maxOfOrNull { it.pnl } ?: 0.0
     val worstLoss = trades.filter { it.pnl < 0 }.minOfOrNull { it.pnl } ?: 0.0
 
-    // Group PnL by day for current month
     val dayPnlMap = remember(trades, calendarMonth) {
         val map = mutableMapOf<Int, Double>()
         val monthFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault()).format(calendarMonth.time)
@@ -270,7 +264,7 @@ fun AnalyticsCalendarDialog(
     }
 
     val cal = (calendarMonth.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }
-    val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1 // 0 for Sunday
+    val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1
     val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
     AlertDialog(
@@ -288,7 +282,6 @@ fun AnalyticsCalendarDialog(
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Best Win & Worst Loss Boxes
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D28)),
@@ -312,7 +305,6 @@ fun AnalyticsCalendarDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Month Navigation
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -341,7 +333,6 @@ fun AnalyticsCalendarDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Days of week header
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                     listOf("S", "M", "T", "W", "T", "F", "S").forEach {
                         Text(it, color = subTextColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -350,7 +341,6 @@ fun AnalyticsCalendarDialog(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Calendar Grid
                 val totalSlots = firstDayOfWeek + daysInMonth
                 val rows = (totalSlots + 6) / 7
 
