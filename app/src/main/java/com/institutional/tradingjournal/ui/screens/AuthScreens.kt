@@ -57,27 +57,19 @@ fun WelcomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF090A0F))
-            .padding(24.dp),
+            .padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AppLogoIcon(size = 40, corner = 8)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "Orderflow Journal Book",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            AppLogoIcon(size = 110, corner = 22)
-            Spacer(modifier = Modifier.height(20.dp))
+        // Center Branding (Top Extra Header completely removed)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            AppLogoIcon(size = 130, corner = 26)
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Orderflow Journal Book",
                 color = Color.White,
@@ -97,23 +89,23 @@ fun WelcomeScreen(
                 onClick = onNavigateToSignup,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(50.dp)
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
-                Text("Create New Account →", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Create New Account →", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             OutlinedButton(
                 onClick = onNavigateToLogin,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFF12141C)),
-                modifier = Modifier.fillMaxWidth().height(50.dp)
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
-                Text("I already have an account", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("I already have an account", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "By using Orderflow Journal log, you agree to our Terms of Service & Privacy Policy.",
                 color = Color.Gray,
@@ -145,11 +137,13 @@ fun LoginScreen(
             val selectedEmail = account.email ?: "google_trader@orderflow.com"
             val finalUsername = account.displayName ?: "Trader"
             UserDataStore.registerUser(context, selectedEmail, "GOOGLE_AUTH", finalUsername)
+            UserDataStore.setSession(context, selectedEmail)
             Toast.makeText(context, "Welcome $finalUsername", Toast.LENGTH_SHORT).show()
             onLoginSuccess()
         } catch (e: Exception) {
             val fallbackEmail = "trader@google.com"
             UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
+            UserDataStore.setSession(context, fallbackEmail)
             Toast.makeText(context, "Google Signed In: $fallbackEmail", Toast.LENGTH_SHORT).show()
             onLoginSuccess()
         }
@@ -223,14 +217,7 @@ fun LoginScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.Start
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AppLogoIcon(size = 36, corner = 8)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Orderflow Journal Book", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         Text("Welcome Back", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Text("Track and analyze your trades", color = Color.Gray, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp, bottom = 28.dp))
 
@@ -291,6 +278,7 @@ fun LoginScreen(
                 }
 
                 if (UserDataStore.authenticate(context, cleanEmail, password)) {
+                    UserDataStore.setSession(context, cleanEmail)
                     val username = UserDataStore.getUsername(context, cleanEmail)
                     Toast.makeText(context, "Welcome back, $username!", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
@@ -323,6 +311,7 @@ fun LoginScreen(
                 } catch (e: Exception) {
                     val fallbackEmail = "trader@google.com"
                     UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
+                    UserDataStore.setSession(context, fallbackEmail)
                     Toast.makeText(context, "Google Signed In: $fallbackEmail", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 }
@@ -372,11 +361,13 @@ fun SignupScreen(
             val selectedEmail = account.email ?: "google_trader@orderflow.com"
             val finalUsername = account.displayName ?: "Trader"
             UserDataStore.registerUser(context, selectedEmail, "GOOGLE_AUTH", finalUsername)
+            UserDataStore.setSession(context, selectedEmail)
             Toast.makeText(context, "Account created: $selectedEmail", Toast.LENGTH_SHORT).show()
             onSignupSuccess()
         } catch (e: Exception) {
             val fallbackEmail = "trader@google.com"
             UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
+            UserDataStore.setSession(context, fallbackEmail)
             Toast.makeText(context, "Account created with Google!", Toast.LENGTH_SHORT).show()
             onSignupSuccess()
         }
@@ -398,13 +389,6 @@ fun SignupScreen(
             modifier = Modifier.padding(top = 8.dp, bottom = 20.dp).clickable { onNavigateToLogin() }
         )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AppLogoIcon(size = 36, corner = 8)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Orderflow Journal Book", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
         Text("Create New Account", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Text("Start logging and analyzing with precision", color = Color.Gray, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp, bottom = 24.dp))
 
@@ -466,6 +450,7 @@ fun SignupScreen(
                 }
 
                 UserDataStore.registerUser(context, cleanEmail, password, cleanUser)
+                UserDataStore.setSession(context, cleanEmail)
                 Toast.makeText(context, "Account Created! Welcome $cleanUser", Toast.LENGTH_SHORT).show()
                 onSignupSuccess()
             },
@@ -494,6 +479,7 @@ fun SignupScreen(
                 } catch (e: Exception) {
                     val fallbackEmail = "trader@google.com"
                     UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
+                    UserDataStore.setSession(context, fallbackEmail)
                     Toast.makeText(context, "Account created with Google!", Toast.LENGTH_SHORT).show()
                     onSignupSuccess()
                 }
