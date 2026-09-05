@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.institutional.tradingjournal.R
 import com.institutional.tradingjournal.data.UserDataStore
 import kotlinx.coroutines.delay
 
@@ -28,11 +29,6 @@ fun SplashScreen(
 ) {
     val context = LocalContext.current
     val alphaAnim = remember { Animatable(0f) }
-
-    val iconResId = remember(context) {
-        val mipmapId = context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName)
-        if (mipmapId != 0) mipmapId else context.resources.getIdentifier("ic_launcher", "drawable", context.packageName)
-    }
 
     LaunchedEffect(Unit) {
         alphaAnim.animateTo(1f, animationSpec = tween(700))
@@ -56,17 +52,13 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.alpha(alphaAnim.value)
         ) {
-            if (iconResId != 0) {
-                Image(
-                    painter = painterResource(id = iconResId),
-                    contentDescription = "Official App Logo",
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                )
-            } else {
-                Text("📈", fontSize = 54.sp)
-            }
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher),
+                contentDescription = "Official App Logo",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
