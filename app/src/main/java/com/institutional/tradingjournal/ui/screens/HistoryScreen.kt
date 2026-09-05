@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.institutional.tradingjournal.data.entity.TradeEntity
 import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
 
@@ -25,10 +26,12 @@ import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
 @Composable
 fun HistoryScreen(
     isDark: Boolean = true,
-    tradeViewModel: TradeViewModel
+    viewModel: TradeViewModel = hiltViewModel(),
+    tradeViewModel: TradeViewModel = viewModel
 ) {
+    val actualViewModel = tradeViewModel
     val context = LocalContext.current
-    val trades by tradeViewModel.allTrades.collectAsState(initial = emptyList())
+    val trades by actualViewModel.allTrades.collectAsState(initial = emptyList())
 
     val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
     val cardBg = if (isDark) Color(0xFF12141C) else Color.White
@@ -224,7 +227,6 @@ fun HistoryScreen(
             )
         }
 
-        // Parsing existing notes into Mistake and Learning
         val existingNotes = currentTrade.emotion
         var mistakeText by remember {
             mutableStateOf(
@@ -305,7 +307,6 @@ fun HistoryScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Profit/Loss Display Box
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -378,7 +379,7 @@ fun HistoryScreen(
                             pnl = finalPnl,
                             emotion = compiledNotes
                         )
-                        tradeViewModel.updateTrade(updated)
+                        actualViewModel.updateTrade(updated)
                         Toast.makeText(context, "Trade updated successfully!", Toast.LENGTH_SHORT).show()
                         tradeToEdit = null
                     },
@@ -395,7 +396,6 @@ fun HistoryScreen(
             }
         )
 
-        // Nested Amount Dialog for Win / Loss
         if (showPnlDialog) {
             AlertDialog(
                 onDismissRequest = { showPnlDialog = false },
@@ -453,7 +453,6 @@ fun HistoryScreen(
         }
     }
 
-    // Delete Confirmation Dialog
     tradeToDelete?.let { trade ->
         AlertDialog(
             onDismissRequest = { tradeToDelete = null },
@@ -463,7 +462,7 @@ fun HistoryScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        tradeViewModel.deleteTrade(trade)
+                        actualViewModel.deleteTrade(trade)
                         Toast.makeText(context, "Trade deleted", Toast.LENGTH_SHORT).show()
                         tradeToDelete = null
                     },
