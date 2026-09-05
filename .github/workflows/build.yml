@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -20,8 +21,14 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Permanent Static Keystore Generation: Guarantees 100% Identical Signature Across All Builds
-    - name: Ensure Static Android Debug Keystore
+    # Lock Gradle version strictly to 8.5 to avoid Gradle 9 API breaks
+    - name: Setup Gradle 8.5
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '8.5'
+
+    # Fixed Keystore for Seamless In-Place Updates
+    - name: Generate Static Debug Keystore
       run: |
         mkdir -p ~/.android
         keytool -genkeypair -v -keystore ~/.android/debug.keystore -alias androiddebugkey -keypass android -storepass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
