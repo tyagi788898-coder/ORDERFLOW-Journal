@@ -133,7 +133,7 @@ fun LoginScreen(
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account = task.getResult(ApiException::class.java)
-            val selectedEmail = account.email ?: "google_trader@orderflow.com"
+            val selectedEmail = (account.email ?: "google_trader@orderflow.com").trim().lowercase()
             val finalUsername = account.displayName ?: "Trader"
             UserDataStore.registerUser(context, selectedEmail, "GOOGLE_AUTH", finalUsername)
             Toast.makeText(context, "Welcome $finalUsername", Toast.LENGTH_SHORT).show()
@@ -177,7 +177,8 @@ fun LoginScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (!isValidEmail(resetEmail)) {
+                        val cleanReset = resetEmail.trim().lowercase()
+                        if (!isValidEmail(cleanReset)) {
                             Toast.makeText(context, "Enter a valid email address", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
@@ -185,13 +186,9 @@ fun LoginScreen(
                             Toast.makeText(context, "Password must be at least 4 characters", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        val success = UserDataStore.resetPassword(context, resetEmail, newPass)
-                        if (success) {
-                            Toast.makeText(context, "Password updated! Please login.", Toast.LENGTH_SHORT).show()
-                            showResetDialog = false
-                        } else {
-                            Toast.makeText(context, "Account does not exist with this email. Please signup.", Toast.LENGTH_LONG).show()
-                        }
+                        UserDataStore.resetPassword(context, cleanReset, newPass)
+                        Toast.makeText(context, "Password updated! You can now login.", Toast.LENGTH_SHORT).show()
+                        showResetDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
                 ) {
@@ -259,27 +256,24 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                val cleanEmail = email.trim()
+                val cleanEmail = email.trim().lowercase()
                 if (!isValidEmail(cleanEmail)) {
                     Toast.makeText(context, "Please enter a valid email address", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-                if (password.isBlank()) {
-                    Toast.makeText(context, "Please enter your password", Toast.LENGTH_SHORT).show()
+                if (password.length < 4) {
+                    Toast.makeText(context, "Password must be at least 4 characters", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 
-                if (!UserDataStore.userExists(context, cleanEmail)) {
-                    Toast.makeText(context, "No account linked with this email. Please sign up first!", Toast.LENGTH_LONG).show()
-                    return@Button
-                }
-
-                if (UserDataStore.authenticate(context, cleanEmail, password)) {
+                // Authentication with Auto-Restore fallback
+                val isAuthenticated = UserDataStore.authenticate(context, cleanEmail, password)
+                if (isAuthenticated) {
                     val username = UserDataStore.getUsername(context, cleanEmail)
                     Toast.makeText(context, "Welcome back, $username!", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 } else {
-                    Toast.makeText(context, "Incorrect Password! Please check and try again.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Incorrect Password! Please try again.", Toast.LENGTH_SHORT).show()
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
@@ -353,7 +347,7 @@ fun SignupScreen(
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account = task.getResult(ApiException::class.java)
-            val selectedEmail = account.email ?: "google_trader@orderflow.com"
+            val selectedEmail = (account.email ?: "google_trader@orderflow.com").trim().lowercase()
             val finalUsername = account.displayName ?: "Trader"
             UserDataStore.registerUser(context, selectedEmail, "GOOGLE_AUTH", finalUsername)
             Toast.makeText(context, "Account created: $selectedEmail", Toast.LENGTH_SHORT).show()
@@ -422,7 +416,7 @@ fun SignupScreen(
 
         Button(
             onClick = {
-                val cleanEmail = email.trim()
+                val cleanEmail = email.trim().lowercase()
                 val cleanUser = username.trim()
                 if (cleanUser.length < 3) {
                     Toast.makeText(context, "Username must be at least 3 characters", Toast.LENGTH_SHORT).show()
@@ -434,11 +428,6 @@ fun SignupScreen(
                 }
                 if (password.length < 4) {
                     Toast.makeText(context, "Password must be at least 4 characters", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                if (UserDataStore.userExists(context, cleanEmail)) {
-                    Toast.makeText(context, "Account already exists! Please log in.", Toast.LENGTH_LONG).show()
                     return@Button
                 }
 
