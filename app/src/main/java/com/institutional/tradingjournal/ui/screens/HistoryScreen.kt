@@ -2,7 +2,6 @@ package com.institutional.tradingjournal.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -72,10 +71,11 @@ fun HistoryScreen(
     val currentEmail = UserDataStore.getCurrentSession(context) ?: ""
     val allTradesList by actualViewModel.allTrades.collectAsState(initial = emptyList())
 
-    // Filter trades strictly by current logged-in user email
     val trades = remember(allTradesList, currentEmail) {
         if (currentEmail.isBlank()) allTradesList
-        else allTradesList.filter { it.email.equals(currentEmail, ignoreCase = true) || it.email == "default_trader" }
+        else allTradesList.filter { 
+            it.email.equals(currentEmail, ignoreCase = true) || it.email == "default_trader" 
+        }
     }
 
     val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
@@ -208,7 +208,6 @@ fun HistoryScreen(
                                         fontWeight = FontWeight.Bold
                                     )
 
-                                    // Status Badge
                                     Surface(
                                         color = statusColor.copy(alpha = 0.18f),
                                         shape = RoundedCornerShape(4.dp),
@@ -223,7 +222,6 @@ fun HistoryScreen(
                                         )
                                     }
 
-                                    // Score Badge
                                     Surface(
                                         color = Color(0xFF1E2638),
                                         shape = RoundedCornerShape(4.dp)
@@ -260,69 +258,77 @@ fun HistoryScreen(
                                 fontSize = 11.sp
                             )
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                            // Bottom Chips: Mistake and Learning buttons only
+                            // Bottom Buttons: Equal Size, High Brightness Yellow / Red Buttons
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                // Mistake Button
                                 Surface(
                                     color = Color(0xFF261818),
-                                    shape = RoundedCornerShape(6.dp),
+                                    shape = RoundedCornerShape(8.dp),
                                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF5C2525)),
-                                    modifier = Modifier.clickable {
-                                        viewPopupTitle = "❌ Mistake Note"
-                                        viewPopupContent = mistakeStr.ifBlank { "No mistake notes recorded for this trade." }
-                                    }
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
+                                        .clickable {
+                                            viewPopupTitle = "❌ Mistake Note"
+                                            viewPopupContent = mistakeStr.ifBlank { "No mistake notes recorded for this trade." }
+                                        }
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Box(contentAlignment = Alignment.Center) {
                                         Text("❌ Mistake", color = Color(0xFFFF8A80), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
+                                // Learning Button
                                 Surface(
                                     color = Color(0xFF13231B),
-                                    shape = RoundedCornerShape(6.dp),
+                                    shape = RoundedCornerShape(8.dp),
                                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1B4D36)),
-                                    modifier = Modifier.clickable {
-                                        viewPopupTitle = "📖 Learning Note"
-                                        viewPopupContent = learningStr.ifBlank { "No learning notes recorded for this trade." }
-                                    }
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
+                                        .clickable {
+                                            viewPopupTitle = "📖 Learning Note"
+                                            viewPopupContent = learningStr.ifBlank { "No learning notes recorded for this trade." }
+                                        }
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Box(contentAlignment = Alignment.Center) {
                                         Text("📖 Learning", color = Color(0xFFB9F6CA), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.weight(1f))
-
-                                Text(
-                                    text = "✏️ Edit",
-                                    color = Color(0xFF1976D2),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
+                                // High Brightness Yellow EDIT Button
+                                Surface(
+                                    color = Color(0xFFFFC107), // Full Brightness Yellow
+                                    shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
                                         .clickable { tradeToEdit = trade }
-                                        .padding(horizontal = 6.dp, vertical = 4.dp)
-                                )
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text("✏️ Edit", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
 
-                                Text(
-                                    text = "🗑️ Delete",
-                                    color = Color(0xFFEF5350),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
+                                // High Brightness Red DELETE Button
+                                Surface(
+                                    color = Color(0xFFD32F2F), // Full Brightness Red
+                                    shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
                                         .clickable { tradeToDelete = trade }
-                                        .padding(horizontal = 6.dp, vertical = 4.dp)
-                                )
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text("🗑️ Delete", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
                             }
                         }
                     }
@@ -381,7 +387,6 @@ fun HistoryScreen(
             )
         }
 
-        // Clean user inputs without system prefixes
         var mistakeText by remember { mutableStateOf(extractMistake(currentTrade)) }
         var learningText by remember { mutableStateOf(extractLearning(currentTrade)) }
 
@@ -508,7 +513,6 @@ fun HistoryScreen(
                         val numericVal = pnlAmountText.replace("+", "").replace("-", "").replace("$", "").toDoubleOrNull() ?: 0.0
                         val finalPnl = if (pnlAmountText.startsWith("-")) -kotlin.math.abs(numericVal) else kotlin.math.abs(numericVal)
 
-                        // Clean structured format: STATUS:WIN | SCORE:57% | MISTAKE:... | LEARNING:...
                         val compiledMeta = buildString {
                             append("STATUS:$editStatus | SCORE:$currentScore")
                             if (mistakeText.isNotBlank()) append(" | MISTAKE:${mistakeText.trim()}")
