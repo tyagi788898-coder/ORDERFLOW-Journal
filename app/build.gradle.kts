@@ -13,8 +13,8 @@ android {
         applicationId = "com.institutional.tradingjournal"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,7 +24,6 @@ android {
 
     signingConfigs {
         create("releaseConfig") {
-            // Static debug key ensures every build has identical signature for seamless overwrite update
             storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
