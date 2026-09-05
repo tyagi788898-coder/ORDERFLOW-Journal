@@ -62,6 +62,7 @@ fun DashboardScreen(
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
+        // Top Header Row with Compact Attractive Analytics Button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -71,32 +72,39 @@ fun DashboardScreen(
                 Text(
                     text = "📈 Performance Dashboard",
                     color = Color(0xFFFFC107),
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Real-time Orderflow Metrics",
                     color = subTextColor,
-                    fontSize = 12.sp
+                    fontSize = 11.sp
                 )
             }
 
+            // Compact & Attractive Glass-morphic Analytics Chip
             Surface(
-                color = Color(0xFF1F2433),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.clickable { showAnalyticsDialog = true }
+                color = Color(0xFF1E2436),
+                shape = RoundedCornerShape(20.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFC107).copy(alpha = 0.5f)),
+                modifier = Modifier
+                    .clickable { showAnalyticsDialog = true }
+                    .padding(vertical = 2.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text("📊 Analytics", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("📊", fontSize = 11.sp)
+                    Text("Analytics", color = Color(0xFFFFC107), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Top Metrics Row
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -123,6 +131,7 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Total PnL Card
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
@@ -154,6 +163,7 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Cumulative Equity Growth Curve Card
         Card(
             colors = CardDefaults.cardColors(containerColor = cardBg),
             shape = RoundedCornerShape(12.dp),
