@@ -13,8 +13,8 @@ android {
         applicationId = "com.institutional.tradingjournal"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -22,9 +22,19 @@ android {
         }
     }
 
+    signingConfigs {
+        create("releaseConfig") {
+            // Static debug key ensures every build has identical signature for seamless overwrite update
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
-            // Standard Debug Signing enables seamless direct updates
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = false
