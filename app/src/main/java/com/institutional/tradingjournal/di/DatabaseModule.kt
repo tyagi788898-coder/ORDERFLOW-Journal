@@ -2,6 +2,7 @@ package com.institutional.tradingjournal.di
 
 import android.content.Context
 import androidx.room.Room
+import com.institutional.tradingjournal.data.dao.StrategyDao
 import com.institutional.tradingjournal.data.dao.TradeDao
 import com.institutional.tradingjournal.data.database.AppDatabase
 import dagger.Module
@@ -30,5 +31,10 @@ object DatabaseModule {
     @Provides
     fun provideTradeDao(database: AppDatabase): TradeDao {
         return database.tradeDao()
+    }
+
+    @Provides
+    fun provideStrategyDao(database: AppDatabase): StrategyDao {
+        return database.strategyDao()
     }
 }
