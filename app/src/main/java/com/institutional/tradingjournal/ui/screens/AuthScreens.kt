@@ -63,7 +63,6 @@ fun WelcomeScreen(
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Center Branding (Top Extra Header completely removed)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
@@ -137,13 +136,11 @@ fun LoginScreen(
             val selectedEmail = account.email ?: "google_trader@orderflow.com"
             val finalUsername = account.displayName ?: "Trader"
             UserDataStore.registerUser(context, selectedEmail, "GOOGLE_AUTH", finalUsername)
-            UserDataStore.setSession(context, selectedEmail)
             Toast.makeText(context, "Welcome $finalUsername", Toast.LENGTH_SHORT).show()
             onLoginSuccess()
         } catch (e: Exception) {
             val fallbackEmail = "trader@google.com"
             UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
-            UserDataStore.setSession(context, fallbackEmail)
             Toast.makeText(context, "Google Signed In: $fallbackEmail", Toast.LENGTH_SHORT).show()
             onLoginSuccess()
         }
@@ -278,7 +275,6 @@ fun LoginScreen(
                 }
 
                 if (UserDataStore.authenticate(context, cleanEmail, password)) {
-                    UserDataStore.setSession(context, cleanEmail)
                     val username = UserDataStore.getUsername(context, cleanEmail)
                     Toast.makeText(context, "Welcome back, $username!", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
@@ -311,7 +307,6 @@ fun LoginScreen(
                 } catch (e: Exception) {
                     val fallbackEmail = "trader@google.com"
                     UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
-                    UserDataStore.setSession(context, fallbackEmail)
                     Toast.makeText(context, "Google Signed In: $fallbackEmail", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 }
@@ -361,13 +356,11 @@ fun SignupScreen(
             val selectedEmail = account.email ?: "google_trader@orderflow.com"
             val finalUsername = account.displayName ?: "Trader"
             UserDataStore.registerUser(context, selectedEmail, "GOOGLE_AUTH", finalUsername)
-            UserDataStore.setSession(context, selectedEmail)
             Toast.makeText(context, "Account created: $selectedEmail", Toast.LENGTH_SHORT).show()
             onSignupSuccess()
         } catch (e: Exception) {
             val fallbackEmail = "trader@google.com"
             UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
-            UserDataStore.setSession(context, fallbackEmail)
             Toast.makeText(context, "Account created with Google!", Toast.LENGTH_SHORT).show()
             onSignupSuccess()
         }
@@ -450,7 +443,6 @@ fun SignupScreen(
                 }
 
                 UserDataStore.registerUser(context, cleanEmail, password, cleanUser)
-                UserDataStore.setSession(context, cleanEmail)
                 Toast.makeText(context, "Account Created! Welcome $cleanUser", Toast.LENGTH_SHORT).show()
                 onSignupSuccess()
             },
@@ -479,7 +471,6 @@ fun SignupScreen(
                 } catch (e: Exception) {
                     val fallbackEmail = "trader@google.com"
                     UserDataStore.registerUser(context, fallbackEmail, "GOOGLE_AUTH", "Google Trader")
-                    UserDataStore.setSession(context, fallbackEmail)
                     Toast.makeText(context, "Account created with Google!", Toast.LENGTH_SHORT).show()
                     onSignupSuccess()
                 }
