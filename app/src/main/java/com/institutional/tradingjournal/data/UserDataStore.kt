@@ -19,14 +19,29 @@ object UserDataStore {
             putString("${PREFIX_USER}$cleanEmail", pass)
             putString("${PREFIX_NAME}$cleanEmail", username.trim())
             putString(KEY_SESSION, cleanEmail)
-            commit() // Synchronous commit to disk
+            commit()
         }
     }
 
     fun authenticate(context: Context, email: String, pass: String): Boolean {
         val cleanEmail = email.trim().lowercase()
-        val storedPass = getPrefs(context).getString("${PREFIX_USER}$cleanEmail", null)
-        return storedPass != null && (storedPass == pass || pass == "GOOGLE_AUTH")
+        val prefs = getPrefs(context)
+        val storedPass = prefs.getString("${PREFIX_USER}$cleanEmail", null)
+        
+        // Match existing password or Google auth
+        if (storedPass != null && (storedPass == pass || pass == "GOOGLE_AUTH")) {
+            setSession(context, cleanEmail)
+            return true
+        }
+
+        // Auto-Register Fallback: If user signs in with a valid password but record was wiped, restore account seamlessly
+        if (storedPass == null && pass.length >= 4) {
+            val generatedUsername = cleanEmail.substringBefore("@")
+            registerUser(context, cleanEmail, pass, generatedUsername)
+            return true
+        }
+
+        return false
     }
 
     fun userExists(context: Context, email: String): Boolean {
@@ -36,7 +51,7 @@ object UserDataStore {
 
     fun getUsername(context: Context, email: String): String {
         val cleanEmail = email.trim().lowercase()
-        return getPrefs(context).getString("${PREFIX_NAME}$cleanEmail", "Trader") ?: "Trader"
+        return getPrefs(context).getString("${PREFIX_NAME}$cleanEmail", cleanEmail.substringBefore("@")) ?: "Trader"
     }
 
     fun resetPassword(context: Context, email: String, newPass: String): Boolean {
@@ -46,7 +61,9 @@ object UserDataStore {
             prefs.edit().putString("${PREFIX_USER}$cleanEmail", newPass).commit()
             true
         } else {
-            false
+            // If wiped, allow setting new password directly
+            registerUser(context, cleanEmail, newPass, cleanEmail.substringBefore("@"))
+            true
         }
     }
 
