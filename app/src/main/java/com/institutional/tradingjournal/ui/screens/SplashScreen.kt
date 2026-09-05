@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,12 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import com.institutional.tradingjournal.data.UserDataStore
 import kotlinx.coroutines.delay
 
@@ -31,20 +29,14 @@ fun SplashScreen(
     val context = LocalContext.current
     val alphaAnim = remember { Animatable(0f) }
 
-    val appIconBitmap = remember(context) {
-        try {
-            val pm = context.packageManager
-            val appInfo = pm.getApplicationInfo(context.packageName, 0)
-            val iconDrawable = pm.getApplicationIcon(appInfo)
-            iconDrawable.toBitmap(200, 200)
-        } catch (e: Exception) {
-            null
-        }
+    val iconResId = remember(context) {
+        val mipmapId = context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName)
+        if (mipmapId != 0) mipmapId else context.resources.getIdentifier("ic_launcher", "drawable", context.packageName)
     }
 
     LaunchedEffect(Unit) {
-        alphaAnim.animateTo(1f, animationSpec = tween(1000))
-        delay(800)
+        alphaAnim.animateTo(1f, animationSpec = tween(700))
+        delay(600)
         val activeSession = UserDataStore.getCurrentSession(context)
         if (!activeSession.isNullOrBlank()) {
             onNavigateToDashboard()
@@ -64,28 +56,16 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.alpha(alphaAnim.value)
         ) {
-            val bitmap = appIconBitmap
-            if (bitmap != null) {
+            if (iconResId != 0) {
                 Image(
-                    bitmap = bitmap.asImageBitmap(),
+                    painter = painterResource(id = iconResId),
                     contentDescription = "Official App Logo",
                     modifier = Modifier
                         .size(100.dp)
                         .clip(RoundedCornerShape(20.dp))
                 )
             } else {
-                Surface(
-                    color = Color(0xFF1E2638),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.size(100.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Text(text = "📈", fontSize = 48.sp)
-                    }
-                }
+                Text("📈", fontSize = 54.sp)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
