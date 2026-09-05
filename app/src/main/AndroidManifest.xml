@@ -7,9 +7,9 @@
     <application
         android:name=".TradingJournalApp"
         android:allowBackup="true"
-        android:icon="@android:drawable/sym_def_app_icon"
+        android:icon="@drawable/ic_launcher"
         android:label="Orderflow Journal"
-        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.InstitutionalTradingJournal">
 
