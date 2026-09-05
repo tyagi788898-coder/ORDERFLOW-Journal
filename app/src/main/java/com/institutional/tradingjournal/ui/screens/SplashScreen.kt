@@ -53,11 +53,11 @@ fun SplashScreen(
             modifier = Modifier.alpha(alphaAnim.value)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher),
+                painter = painterResource(id = R.drawable.ic_launcher_logo),
                 contentDescription = "Official App Logo",
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .size(110.dp)
+                    .clip(RoundedCornerShape(22.dp))
             )
 
             Spacer(modifier = Modifier.height(24.dp))
