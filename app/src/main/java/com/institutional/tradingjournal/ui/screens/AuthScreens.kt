@@ -17,15 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.institutional.tradingjournal.GoogleAuthHelper
@@ -40,34 +39,21 @@ fun isValidEmail(email: String): Boolean {
 @Composable
 fun AppLogoIcon(size: Int = 40, corner: Int = 8) {
     val context = LocalContext.current
-    val appIconBitmap = remember(context) {
-        try {
-            val pm = context.packageManager
-            val appInfo = pm.getApplicationInfo(context.packageName, 0)
-            pm.getApplicationIcon(appInfo).toBitmap(size * 3, size * 3)
-        } catch (e: Exception) {
-            null
-        }
+    val iconResId = remember(context) {
+        val mipmapId = context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName)
+        if (mipmapId != 0) mipmapId else context.resources.getIdentifier("ic_launcher", "drawable", context.packageName)
     }
 
-    if (appIconBitmap != null) {
+    if (iconResId != 0) {
         Image(
-            bitmap = appIconBitmap.asImageBitmap(),
+            painter = painterResource(id = iconResId),
             contentDescription = "App Logo",
             modifier = Modifier
                 .size(size.dp)
                 .clip(RoundedCornerShape(corner.dp))
         )
     } else {
-        Surface(
-            color = Color(0xFF1E2638),
-            shape = RoundedCornerShape(corner.dp),
-            modifier = Modifier.size(size.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text("📈", fontSize = (size / 2).sp)
-            }
-        }
+        Text("📈", fontSize = (size / 2).sp)
     }
 }
 
