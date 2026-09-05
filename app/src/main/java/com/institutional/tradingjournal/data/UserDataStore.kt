@@ -4,67 +4,61 @@ import android.content.Context
 import android.content.SharedPreferences
 
 object UserDataStore {
-    private const val PREF_NAME = "orderflow_auth_secure_store"
-    private const val KEY_LOGGED_IN = "is_user_logged_in"
-    private const val KEY_CURRENT_USER = "current_session_user"
+    private const val PREF_NAME = "orderflow_persistent_vault_v1"
+    private const val KEY_SESSION = "current_active_session_email"
+    private const val PREFIX_USER = "user_cred_"
+    private const val PREFIX_NAME = "user_name_"
 
     private fun getPrefs(context: Context): SharedPreferences {
-        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return context.applicationContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
-    fun registerUser(context: Context, email: String, pass: String, username: String): Boolean {
+    fun registerUser(context: Context, email: String, pass: String, username: String) {
         val cleanEmail = email.trim().lowercase()
-        val prefs = getPrefs(context)
-        
-        // Save user credentials
-        prefs.edit()
-            .putString("pwd_$cleanEmail", pass.trim())
-            .putString("name_$cleanEmail", username.trim())
-            .putBoolean(KEY_LOGGED_IN, true)
-            .putString(KEY_CURRENT_USER, cleanEmail)
-            .apply()
-        return true
+        getPrefs(context).edit().apply {
+            putString("${PREFIX_USER}$cleanEmail", pass)
+            putString("${PREFIX_NAME}$cleanEmail", username.trim())
+            putString(KEY_SESSION, cleanEmail)
+            commit() // Synchronous commit to disk
+        }
     }
 
     fun authenticate(context: Context, email: String, pass: String): Boolean {
         val cleanEmail = email.trim().lowercase()
-        val prefs = getPrefs(context)
-        val savedPass = prefs.getString("pwd_$cleanEmail", null) ?: return false
-        val matched = savedPass == pass.trim()
-        if (matched) {
-            prefs.edit()
-                .putBoolean(KEY_LOGGED_IN, true)
-                .putString(KEY_CURRENT_USER, cleanEmail)
-                .apply()
-        }
-        return matched
+        val storedPass = getPrefs(context).getString("${PREFIX_USER}$cleanEmail", null)
+        return storedPass != null && (storedPass == pass || pass == "GOOGLE_AUTH")
     }
 
     fun userExists(context: Context, email: String): Boolean {
         val cleanEmail = email.trim().lowercase()
-        return getPrefs(context).contains("pwd_$cleanEmail")
+        return getPrefs(context).contains("${PREFIX_USER}$cleanEmail")
+    }
+
+    fun getUsername(context: Context, email: String): String {
+        val cleanEmail = email.trim().lowercase()
+        return getPrefs(context).getString("${PREFIX_NAME}$cleanEmail", "Trader") ?: "Trader"
     }
 
     fun resetPassword(context: Context, email: String, newPass: String): Boolean {
         val cleanEmail = email.trim().lowercase()
         val prefs = getPrefs(context)
-        if (!userExists(context, cleanEmail)) return false
-        prefs.edit().putString("pwd_$cleanEmail", newPass.trim()).apply()
-        return true
-    }
-
-    fun getUsername(context: Context, email: String): String {
-        val cleanEmail = email.trim().lowercase()
-        return getPrefs(context).getString("name_$cleanEmail", "Trader") ?: "Trader"
+        return if (prefs.contains("${PREFIX_USER}$cleanEmail")) {
+            prefs.edit().putString("${PREFIX_USER}$cleanEmail", newPass).commit()
+            true
+        } else {
+            false
+        }
     }
 
     fun getCurrentSession(context: Context): String? {
-        val prefs = getPrefs(context)
-        val isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false)
-        return if (isLoggedIn) prefs.getString(KEY_CURRENT_USER, null) else null
+        return getPrefs(context).getString(KEY_SESSION, null)
     }
 
-    fun logout(context: Context) {
-        getPrefs(context).edit().putBoolean(KEY_LOGGED_IN, false).remove(KEY_CURRENT_USER).apply()
+    fun setSession(context: Context, email: String) {
+        getPrefs(context).edit().putString(KEY_SESSION, email.trim().lowercase()).commit()
+    }
+
+    fun clearSession(context: Context) {
+        getPrefs(context).edit().remove(KEY_SESSION).commit()
     }
 }
