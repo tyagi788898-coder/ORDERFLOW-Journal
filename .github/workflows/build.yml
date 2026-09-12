@@ -21,17 +21,42 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Lock Gradle version strictly to 8.5 to avoid Gradle 9 API breaks
     - name: Setup Gradle 8.5
       uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: '8.5'
 
-    # Fixed Keystore for Seamless In-Place Updates
-    - name: Generate Static Debug Keystore
+    - name: Generate Debug Keystore
       run: |
         mkdir -p ~/.android
-        keytool -genkeypair -v -keystore ~/.android/debug.keystore -alias androiddebugkey -keypass android -storepass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        rm -f ~/.android/debug.keystore
+
+        keytool -genkeypair \
+          -v \
+          -keystore ~/.android/debug.keystore \
+          -alias androiddebugkey \
+          -keypass android \
+          -storepass android \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -dname "CN=Android Debug,O=Android,C=US"
+
+    - name: Show Signing Certificate
+      run: |
+        echo "=========================================="
+        echo "ANDROID APK SIGNING CERTIFICATE"
+        echo "=========================================="
+
+        keytool -list \
+          -v \
+          -keystore ~/.android/debug.keystore \
+          -alias androiddebugkey \
+          -storepass android
+
+        echo "=========================================="
+        echo "SHA-1 and SHA-256 are shown above."
+        echo "=========================================="
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
