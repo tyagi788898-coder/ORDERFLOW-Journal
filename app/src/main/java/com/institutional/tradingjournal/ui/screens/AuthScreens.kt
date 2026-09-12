@@ -23,16 +23,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.institutional.tradingjournal.GoogleAuthHelper
 import com.institutional.tradingjournal.R
+import com.institutional.tradingjournal.UserPreferences
 import com.institutional.tradingjournal.data.UserDataStore
+import kotlin.random.Random
 
 const val GOOGLE_WEB_CLIENT_ID =
     "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com"
+
 
 fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS
@@ -40,16 +44,134 @@ fun isValidEmail(email: String): Boolean {
         .matches()
 }
 
+
+private fun generateTraderUsername(): String {
+    return "Trader${Random.nextInt(1000, 10000)}"
+}
+
+
+private fun isGeneratedTraderUsername(username: String): Boolean {
+    return Regex("^Trader\\d{4}$").matches(username.trim())
+}
+
+
+private fun saveEmailUser(
+    context: android.content.Context,
+    email: String,
+    username: String
+) {
+    UserPreferences.saveUser(
+        context = context,
+        email = email.trim().lowercase(),
+        username = username.trim()
+    )
+}
+
+
+private fun finishGoogleUser(
+    context: android.content.Context,
+    email: String,
+    onComplete: (String) -> Unit
+) {
+    val firebaseUser = UserDataStore.getCurrentUser()
+
+    if (firebaseUser == null) {
+        Toast.makeText(
+            context,
+            "Google account session was not found.",
+            Toast.LENGTH_LONG
+        ).show()
+        return
+    }
+
+    val cleanEmail = email.trim().lowercase()
+
+    val savedEmail = UserPreferences
+        .getUserEmail(context)
+        .trim()
+        .lowercase()
+
+    val savedUsername = UserPreferences
+        .getUserName(context)
+        .trim()
+
+    val firebaseUsername = firebaseUser
+        .displayName
+        ?.trim()
+        .orEmpty()
+
+    val finalUsername: String
+
+    /*
+     * If the same Google account was already used on this device
+     * and a real username is already saved, keep it.
+     */
+    if (
+        savedEmail == cleanEmail &&
+        savedUsername.isNotEmpty() &&
+        savedUsername != "Trader"
+    ) {
+        finalUsername = savedUsername
+    }
+    /*
+     * If Firebase already contains our generated Trader1234 style
+     * username, keep the same username after reinstall/login.
+     */
+    else if (isGeneratedTraderUsername(firebaseUsername)) {
+        finalUsername = firebaseUsername
+    }
+    /*
+     * Otherwise generate a new Trader + 4 digit username.
+     */
+    else {
+        finalUsername = generateTraderUsername()
+    }
+
+    /*
+     * Save the username in Firebase profile as well as local
+     * UserPreferences so Settings can display it.
+     */
+    UserDataStore.updateUsername(
+        context = context,
+        username = finalUsername
+    ) { success, error ->
+
+        if (!success) {
+            Toast.makeText(
+                context,
+                error ?: "Unable to save Google username.",
+                Toast.LENGTH_LONG
+            ).show()
+            return@updateUsername
+        }
+
+        UserPreferences.saveUser(
+            context = context,
+            email = cleanEmail,
+            username = finalUsername
+        )
+
+        onComplete(finalUsername)
+    }
+}
+
+
 @Composable
-fun AppLogoIcon(size: Int = 40, corner: Int = 8) {
+fun AppLogoIcon(
+    size: Int = 40,
+    corner: Int = 8
+) {
     Image(
-        painter = painterResource(id = R.drawable.ic_launcher_logo),
+        painter = painterResource(
+            id = R.drawable.ic_launcher_logo
+        ),
         contentDescription = "Official App Logo",
         modifier = Modifier
             .size(size.dp)
             .clip(RoundedCornerShape(corner.dp))
     )
 }
+
 
 @Composable
 fun WelcomeScreen(
@@ -60,19 +182,31 @@ fun WelcomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF090A0F))
-            .padding(horizontal = 24.dp, vertical = 32.dp),
+            .padding(
+                horizontal = 24.dp,
+                vertical = 32.dp
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
+
+        Spacer(
+            modifier = Modifier.height(20.dp)
+        )
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            AppLogoIcon(size = 130, corner = 26)
 
-            Spacer(modifier = Modifier.height(24.dp))
+            AppLogoIcon(
+                size = 130,
+                corner = 26
+            )
+
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
             Text(
                 text = "Orderflow Journal Book",
@@ -81,7 +215,9 @@ fun WelcomeScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
             Text(
                 text = "Institutional Edge & Execution Analysis",
@@ -93,6 +229,7 @@ fun WelcomeScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
+
             Button(
                 onClick = onNavigateToSignup,
                 colors = ButtonDefaults.buttonColors(
@@ -111,7 +248,9 @@ fun WelcomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
 
             OutlinedButton(
                 onClick = onNavigateToLogin,
@@ -131,18 +270,21 @@ fun WelcomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
             Text(
                 text = "By using Orderflow Journal log, you agree to our Terms of Service & Privacy Policy.",
                 color = Color.Gray,
                 fontSize = 11.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
         }
     }
 }
+
 
 @Composable
 fun LoginScreen(
@@ -151,91 +293,129 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var showResetDialog by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+    var email by remember {
+        mutableStateOf("")
+    }
 
-    val googleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    var password by remember {
+        mutableStateOf("")
+    }
 
-        if (result.data == null) {
-            isLoading = false
-            return@rememberLauncherForActivityResult
-        }
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
 
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+    var showResetDialog by remember {
+        mutableStateOf(false)
+    }
 
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val idToken = account.idToken
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
 
-            if (idToken.isNullOrEmpty()) {
+    val googleLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+
+            if (result.data == null) {
                 isLoading = false
-                Toast.makeText(
-                    context,
-                    "Google authentication token not received.",
-                    Toast.LENGTH_SHORT
-                ).show()
                 return@rememberLauncherForActivityResult
             }
 
-            UserDataStore.authenticateWithGoogle(
-                context = context,
-                idToken = idToken
-            ) { success, error ->
+            val task =
+                GoogleSignIn.getSignedInAccountFromIntent(
+                    result.data
+                )
+
+            try {
+
+                val account =
+                    task.getResult(ApiException::class.java)
+
+                val idToken =
+                    account.idToken
+
+                if (idToken.isNullOrEmpty()) {
+                    isLoading = false
+
+                    Toast.makeText(
+                        context,
+                        "Google authentication token not received.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    return@rememberLauncherForActivityResult
+                }
+
+                UserDataStore.authenticateWithGoogle(
+                    context = context,
+                    idToken = idToken
+                ) { success, error ->
+
+                    if (!success) {
+                        isLoading = false
+
+                        Toast.makeText(
+                            context,
+                            error ?: "Google login failed.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        return@authenticateWithGoogle
+                    }
+
+                    finishGoogleUser(
+                        context = context,
+                        email = account.email ?: ""
+                    ) { finalUsername ->
+
+                        isLoading = false
+
+                        Toast.makeText(
+                            context,
+                            "Welcome $finalUsername",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        onLoginSuccess()
+                    }
+                }
+
+            } catch (e: ApiException) {
 
                 isLoading = false
 
-                if (success) {
-                    val finalUsername =
-                        UserDataStore.getUsername(
-                            context,
-                            account.email ?: ""
-                        )
-
+                if (e.statusCode != 12501) {
                     Toast.makeText(
                         context,
-                        "Welcome $finalUsername",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    onLoginSuccess()
-                } else {
-                    Toast.makeText(
-                        context,
-                        error ?: "Google login failed.",
+                        "Google Sign-In failed. Code: ${e.statusCode}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
-            }
 
-        } catch (e: ApiException) {
-            isLoading = false
+            } catch (e: Exception) {
 
-            if (e.statusCode != 12501) {
+                isLoading = false
+
                 Toast.makeText(
                     context,
-                    "Google Sign-In failed. Please try again.",
-                    Toast.LENGTH_SHORT
+                    "Google Sign-In failed: ${e.localizedMessage ?: "Unknown error"}",
+                    Toast.LENGTH_LONG
                 ).show()
             }
-        } catch (e: Exception) {
-            isLoading = false
-
-            Toast.makeText(
-                context,
-                "Google Sign-In failed. Please try again.",
-                Toast.LENGTH_SHORT
-            ).show()
         }
-    }
+
 
     if (showResetDialog) {
-        var resetEmail by remember { mutableStateOf(email) }
-        var resetLoading by remember { mutableStateOf(false) }
+
+        var resetEmail by remember {
+            mutableStateOf(email)
+        }
+
+        var resetLoading by remember {
+            mutableStateOf(false)
+        }
 
         AlertDialog(
             onDismissRequest = {
@@ -244,7 +424,6 @@ fun LoginScreen(
                 }
             },
             containerColor = Color(0xFF12141C),
-
             title = {
                 Text(
                     "Reset Password",
@@ -252,43 +431,52 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold
                 )
             },
-
             text = {
                 Column {
+
                     Text(
                         "Enter your registered email. We will send you a password reset link.",
                         color = Color.Gray,
                         fontSize = 12.sp
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(
+                        modifier = Modifier.height(10.dp)
+                    )
 
                     OutlinedTextField(
                         value = resetEmail,
-                        onValueChange = { resetEmail = it },
-                        label = { Text("Email") },
+                        onValueChange = {
+                            resetEmail = it
+                        },
+                        label = {
+                            Text("Email")
+                        },
                         singleLine = true,
                         enabled = !resetLoading,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
-
             confirmButton = {
+
                 Button(
                     enabled = !resetLoading,
                     onClick = {
 
-                        val cleanReset = resetEmail
-                            .trim()
-                            .lowercase()
+                        val cleanReset =
+                            resetEmail
+                                .trim()
+                                .lowercase()
 
                         if (!isValidEmail(cleanReset)) {
+
                             Toast.makeText(
                                 context,
                                 "Enter a valid email address",
                                 Toast.LENGTH_SHORT
                             ).show()
+
                             return@Button
                         }
 
@@ -302,6 +490,7 @@ fun LoginScreen(
                             resetLoading = false
 
                             if (success) {
+
                                 Toast.makeText(
                                     context,
                                     "Password reset link sent to your email.",
@@ -309,7 +498,9 @@ fun LoginScreen(
                                 ).show()
 
                                 showResetDialog = false
+
                             } else {
+
                                 Toast.makeText(
                                     context,
                                     error ?: "Unable to send reset email.",
@@ -323,13 +514,17 @@ fun LoginScreen(
                     )
                 ) {
                     Text(
-                        if (resetLoading) "Sending..." else "Send Link",
+                        if (resetLoading) {
+                            "Sending..."
+                        } else {
+                            "Send Link"
+                        },
                         color = Color.White
                     )
                 }
             },
-
             dismissButton = {
+
                 TextButton(
                     enabled = !resetLoading,
                     onClick = {
@@ -345,15 +540,21 @@ fun LoginScreen(
         )
     }
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF090A0F))
             .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(
+                rememberScrollState()
+            ),
         horizontalAlignment = Alignment.Start
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
+
+        Spacer(
+            modifier = Modifier.height(20.dp)
+        )
 
         Text(
             "Welcome Back",
@@ -374,7 +575,9 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = {
+                email = it
+            },
             placeholder = {
                 Text(
                     "Enter Email (e.g. name@gmail.com)",
@@ -382,7 +585,10 @@ fun LoginScreen(
                 )
             },
             leadingIcon = {
-                Text("✉️", fontSize = 15.sp)
+                Text(
+                    "✉️",
+                    fontSize = 15.sp
+                )
             },
             singleLine = true,
             enabled = !isLoading,
@@ -393,7 +599,9 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+            },
             placeholder = {
                 Text(
                     "Enter Password",
@@ -401,15 +609,24 @@ fun LoginScreen(
                 )
             },
             leadingIcon = {
-                Text("🔒", fontSize = 15.sp)
+                Text(
+                    "🔒",
+                    fontSize = 15.sp
+                )
             },
             trailingIcon = {
+
                 Text(
-                    text = if (passwordVisible) "👁️" else "🙈",
+                    text = if (passwordVisible) {
+                        "👁️"
+                    } else {
+                        "🙈"
+                    },
                     modifier = Modifier.clickable(
                         enabled = !isLoading
                     ) {
-                        passwordVisible = !passwordVisible
+                        passwordVisible =
+                            !passwordVisible
                     }
                 )
             },
@@ -436,6 +653,7 @@ fun LoginScreen(
                 ),
             contentAlignment = Alignment.CenterEnd
         ) {
+
             Text(
                 text = "Forgot Password?",
                 color = Color(0xFFFFC107),
@@ -449,29 +667,35 @@ fun LoginScreen(
             )
         }
 
+
         Button(
             enabled = !isLoading,
             onClick = {
 
-                val cleanEmail = email
-                    .trim()
-                    .lowercase()
+                val cleanEmail =
+                    email
+                        .trim()
+                        .lowercase()
 
                 if (!isValidEmail(cleanEmail)) {
+
                     Toast.makeText(
                         context,
                         "Please enter a valid email address",
                         Toast.LENGTH_SHORT
                     ).show()
+
                     return@Button
                 }
 
                 if (password.length < 6) {
+
                     Toast.makeText(
                         context,
                         "Password must be at least 6 characters",
                         Toast.LENGTH_SHORT
                     ).show()
+
                     return@Button
                 }
 
@@ -486,11 +710,18 @@ fun LoginScreen(
                     isLoading = false
 
                     if (success) {
+
                         val username =
                             UserDataStore.getUsername(
                                 context,
                                 cleanEmail
                             )
+
+                        saveEmailUser(
+                            context,
+                            cleanEmail,
+                            username
+                        )
 
                         Toast.makeText(
                             context,
@@ -499,7 +730,9 @@ fun LoginScreen(
                         ).show()
 
                         onLoginSuccess()
+
                     } else {
+
                         Toast.makeText(
                             context,
                             error ?: "Incorrect email or password.",
@@ -516,12 +749,18 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(50.dp)
         ) {
+
             Text(
-                if (isLoading) "Logging in..." else "Log in",
+                if (isLoading) {
+                    "Logging in..."
+                } else {
+                    "Log in"
+                },
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
         }
+
 
         Row(
             modifier = Modifier
@@ -529,6 +768,7 @@ fun LoginScreen(
                 .padding(vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 color = Color(0xFF2A2E3D)
@@ -546,6 +786,7 @@ fun LoginScreen(
             )
         }
 
+
         Surface(
             color = Color(0xFF12141C),
             shape = RoundedCornerShape(12.dp),
@@ -559,28 +800,33 @@ fun LoginScreen(
                     isLoading = true
 
                     try {
+
                         googleLauncher.launch(
                             GoogleAuthHelper.getSignInIntent(
                                 context,
                                 GOOGLE_WEB_CLIENT_ID
                             )
                         )
+
                     } catch (e: Exception) {
+
                         isLoading = false
 
                         Toast.makeText(
                             context,
-                            "Unable to open Google Sign-In.",
-                            Toast.LENGTH_SHORT
+                            "Unable to open Google Sign-In: ${e.localizedMessage ?: "Unknown error"}",
+                            Toast.LENGTH_LONG
                         ).show()
                     }
                 }
         ) {
+
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
                     "G",
                     fontWeight = FontWeight.Bold,
@@ -588,7 +834,9 @@ fun LoginScreen(
                     fontSize = 18.sp
                 )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(
+                    modifier = Modifier.width(10.dp)
+                )
 
                 Text(
                     "Continue with Google",
@@ -598,12 +846,16 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+
+        Spacer(
+            modifier = Modifier.height(30.dp)
+        )
 
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
+
             Text(
                 text = "Don't have an account? Sign Up",
                 color = Color(0xFFFFC107),
@@ -619,105 +871,144 @@ fun LoginScreen(
     }
 }
 
+
 @Composable
 fun SignupScreen(
     onSignupSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+
     val context = LocalContext.current
 
-    var email by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+    var email by remember {
+        mutableStateOf("")
+    }
 
-    val googleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    var username by remember {
+        mutableStateOf("")
+    }
 
-        if (result.data == null) {
-            isLoading = false
-            return@rememberLauncherForActivityResult
-        }
+    var password by remember {
+        mutableStateOf("")
+    }
 
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
 
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val idToken = account.idToken
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
 
-            if (idToken.isNullOrEmpty()) {
+
+    val googleLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+
+            if (result.data == null) {
                 isLoading = false
-
-                Toast.makeText(
-                    context,
-                    "Google authentication token not received.",
-                    Toast.LENGTH_SHORT
-                ).show()
-
                 return@rememberLauncherForActivityResult
             }
 
-            UserDataStore.authenticateWithGoogle(
-                context = context,
-                idToken = idToken
-            ) { success, error ->
+            val task =
+                GoogleSignIn.getSignedInAccountFromIntent(
+                    result.data
+                )
+
+            try {
+
+                val account =
+                    task.getResult(ApiException::class.java)
+
+                val idToken =
+                    account.idToken
+
+                if (idToken.isNullOrEmpty()) {
+
+                    isLoading = false
+
+                    Toast.makeText(
+                        context,
+                        "Google authentication token not received.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    return@rememberLauncherForActivityResult
+                }
+
+                UserDataStore.authenticateWithGoogle(
+                    context = context,
+                    idToken = idToken
+                ) { success, error ->
+
+                    if (!success) {
+
+                        isLoading = false
+
+                        Toast.makeText(
+                            context,
+                            error ?: "Google account setup failed.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        return@authenticateWithGoogle
+                    }
+
+                    finishGoogleUser(
+                        context = context,
+                        email = account.email ?: ""
+                    ) { finalUsername ->
+
+                        isLoading = false
+
+                        Toast.makeText(
+                            context,
+                            "Welcome $finalUsername",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        onSignupSuccess()
+                    }
+                }
+
+            } catch (e: ApiException) {
 
                 isLoading = false
 
-                if (success) {
-                    val finalUsername =
-                        UserDataStore.getUsername(
-                            context,
-                            account.email ?: ""
-                        )
+                if (e.statusCode != 12501) {
 
                     Toast.makeText(
                         context,
-                        "Welcome $finalUsername",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    onSignupSuccess()
-                } else {
-                    Toast.makeText(
-                        context,
-                        error ?: "Google account setup failed.",
+                        "Google Sign-In failed. Code: ${e.statusCode}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
-            }
 
-        } catch (e: ApiException) {
-            isLoading = false
+            } catch (e: Exception) {
 
-            if (e.statusCode != 12501) {
+                isLoading = false
+
                 Toast.makeText(
                     context,
-                    "Google Sign-In failed. Please try again.",
-                    Toast.LENGTH_SHORT
+                    "Google Sign-In failed: ${e.localizedMessage ?: "Unknown error"}",
+                    Toast.LENGTH_LONG
                 ).show()
             }
-        } catch (e: Exception) {
-            isLoading = false
-
-            Toast.makeText(
-                context,
-                "Google Sign-In failed. Please try again.",
-                Toast.LENGTH_SHORT
-            ).show()
         }
-    }
+
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF090A0F))
             .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(
+                rememberScrollState()
+            ),
         horizontalAlignment = Alignment.Start
     ) {
+
         Text(
             text = "← Back to Login",
             color = Color(0xFFFFC107),
@@ -752,9 +1043,12 @@ fun SignupScreen(
             )
         )
 
+
         OutlinedTextField(
             value = username,
-            onValueChange = { username = it },
+            onValueChange = {
+                username = it
+            },
             placeholder = {
                 Text(
                     "Choose a Username",
@@ -762,7 +1056,10 @@ fun SignupScreen(
                 )
             },
             leadingIcon = {
-                Text("👤", fontSize = 15.sp)
+                Text(
+                    "👤",
+                    fontSize = 15.sp
+                )
             },
             singleLine = true,
             enabled = !isLoading,
@@ -771,9 +1068,12 @@ fun SignupScreen(
                 .padding(bottom = 14.dp)
         )
 
+
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = {
+                email = it
+            },
             placeholder = {
                 Text(
                     "Enter a Valid Email (e.g. name@gmail.com)",
@@ -781,7 +1081,10 @@ fun SignupScreen(
                 )
             },
             leadingIcon = {
-                Text("✉️", fontSize = 15.sp)
+                Text(
+                    "✉️",
+                    fontSize = 15.sp
+                )
             },
             singleLine = true,
             enabled = !isLoading,
@@ -790,9 +1093,12 @@ fun SignupScreen(
                 .padding(bottom = 14.dp)
         )
 
+
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+            },
             placeholder = {
                 Text(
                     "Create a Password (min 6 chars)",
@@ -800,15 +1106,24 @@ fun SignupScreen(
                 )
             },
             leadingIcon = {
-                Text("🔒", fontSize = 15.sp)
+                Text(
+                    "🔒",
+                    fontSize = 15.sp
+                )
             },
             trailingIcon = {
+
                 Text(
-                    text = if (passwordVisible) "👁️" else "🙈",
+                    text = if (passwordVisible) {
+                        "👁️"
+                    } else {
+                        "🙈"
+                    },
                     modifier = Modifier.clickable(
                         enabled = !isLoading
                     ) {
-                        passwordVisible = !passwordVisible
+                        passwordVisible =
+                            !passwordVisible
                     }
                 )
             },
@@ -828,40 +1143,49 @@ fun SignupScreen(
                 .padding(bottom = 24.dp)
         )
 
+
         Button(
             enabled = !isLoading,
             onClick = {
 
-                val cleanEmail = email
-                    .trim()
-                    .lowercase()
+                val cleanEmail =
+                    email
+                        .trim()
+                        .lowercase()
 
-                val cleanUser = username.trim()
+                val cleanUser =
+                    username.trim()
 
                 if (cleanUser.length < 3) {
+
                     Toast.makeText(
                         context,
                         "Username must be at least 3 characters",
                         Toast.LENGTH_SHORT
                     ).show()
+
                     return@Button
                 }
 
                 if (!isValidEmail(cleanEmail)) {
+
                     Toast.makeText(
                         context,
                         "Please enter a valid email address",
                         Toast.LENGTH_SHORT
                     ).show()
+
                     return@Button
                 }
 
                 if (password.length < 6) {
+
                     Toast.makeText(
                         context,
                         "Password must be at least 6 characters",
                         Toast.LENGTH_SHORT
                     ).show()
+
                     return@Button
                 }
 
@@ -877,6 +1201,13 @@ fun SignupScreen(
                     isLoading = false
 
                     if (success) {
+
+                        saveEmailUser(
+                            context,
+                            cleanEmail,
+                            cleanUser
+                        )
+
                         Toast.makeText(
                             context,
                             "Account Created! Welcome $cleanUser",
@@ -884,7 +1215,9 @@ fun SignupScreen(
                         ).show()
 
                         onSignupSuccess()
+
                     } else {
+
                         Toast.makeText(
                             context,
                             error ?: "Account creation failed.",
@@ -901,12 +1234,18 @@ fun SignupScreen(
                 .fillMaxWidth()
                 .height(50.dp)
         ) {
+
             Text(
-                if (isLoading) "Creating Account..." else "Create Account",
+                if (isLoading) {
+                    "Creating Account..."
+                } else {
+                    "Create Account"
+                },
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
         }
+
 
         Row(
             modifier = Modifier
@@ -914,6 +1253,7 @@ fun SignupScreen(
                 .padding(vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 color = Color(0xFF2A2E3D)
@@ -931,6 +1271,7 @@ fun SignupScreen(
             )
         }
 
+
         Surface(
             color = Color(0xFF12141C),
             shape = RoundedCornerShape(12.dp),
@@ -944,28 +1285,33 @@ fun SignupScreen(
                     isLoading = true
 
                     try {
+
                         googleLauncher.launch(
                             GoogleAuthHelper.getSignInIntent(
                                 context,
                                 GOOGLE_WEB_CLIENT_ID
                             )
                         )
+
                     } catch (e: Exception) {
+
                         isLoading = false
 
                         Toast.makeText(
                             context,
-                            "Unable to open Google Sign-In.",
-                            Toast.LENGTH_SHORT
+                            "Unable to open Google Sign-In: ${e.localizedMessage ?: "Unknown error"}",
+                            Toast.LENGTH_LONG
                         ).show()
                     }
                 }
         ) {
+
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
                     "G",
                     fontWeight = FontWeight.Bold,
@@ -973,7 +1319,9 @@ fun SignupScreen(
                     fontSize = 18.sp
                 )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(
+                    modifier = Modifier.width(10.dp)
+                )
 
                 Text(
                     "Continue with Google",
@@ -983,12 +1331,16 @@ fun SignupScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
 
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
+
             Text(
                 text = "Already registered? Log in",
                 color = Color(0xFFFFC107),
