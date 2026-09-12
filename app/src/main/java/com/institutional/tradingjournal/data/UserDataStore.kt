@@ -1,81 +1,222 @@
 package com.institutional.tradingjournal.data
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.UserProfileChangeRequest
 
 object UserDataStore {
-    private const val PREF_NAME = "orderflow_persistent_vault_v1"
-    private const val KEY_SESSION = "current_active_session_email"
-    private const val PREFIX_USER = "user_cred_"
-    private const val PREFIX_NAME = "user_name_"
 
-    private fun getPrefs(context: Context): SharedPreferences {
-        return context.applicationContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    private val firebaseAuth: FirebaseAuth
+        get() = FirebaseAuth.getInstance()
+
+    /**
+     * Email + Password Signup
+     */
+    fun registerUser(
+        context: Context,
+        email: String,
+        pass: String,
+        username: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        val cleanEmail = email.trim().lowercase()
+        val cleanUsername = username.trim()
+
+        firebaseAuth
+            .createUserWithEmailAndPassword(cleanEmail, pass)
+            .addOnCompleteListener { task ->
+
+                if (!task.isSuccessful) {
+                    onResult(
+                        false,
+                        task.exception?.localizedMessage ?: "Signup failed."
+                    )
+                    return@addOnCompleteListener
+                }
+
+                val user = firebaseAuth.currentUser
+
+                if (user == null) {
+                    onResult(false, "Account created but user session was not found.")
+                    return@addOnCompleteListener
+                }
+
+                // Save username/display name in Firebase profile
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(
+                        if (cleanUsername.isNotEmpty()) {
+                            cleanUsername
+                        } else {
+                            cleanEmail.substringBefore("@")
+                        }
+                    )
+                    .build()
+
+                user.updateProfile(profileUpdates)
+                    .addOnCompleteListener {
+                        onResult(true, null)
+                    }
+            }
     }
 
-    fun registerUser(context: Context, email: String, pass: String, username: String) {
+    /**
+     * Email + Password Login
+     */
+    fun authenticate(
+        context: Context,
+        email: String,
+        pass: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
         val cleanEmail = email.trim().lowercase()
-        getPrefs(context).edit().apply {
-            putString("${PREFIX_USER}$cleanEmail", pass)
-            putString("${PREFIX_NAME}$cleanEmail", username.trim())
-            putString(KEY_SESSION, cleanEmail)
-            commit()
+
+        firebaseAuth
+            .signInWithEmailAndPassword(cleanEmail, pass)
+            .addOnCompleteListener { task ->
+
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(
+                        false,
+                        task.exception?.localizedMessage ?: "Login failed."
+                    )
+                }
+            }
+    }
+
+    /**
+     * Google Login using Firebase Authentication
+     */
+    fun authenticateWithGoogle(
+        context: Context,
+        idToken: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+        firebaseAuth
+            .signInWithCredential(credential)
+            .addOnCompleteListener { task ->
+
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(
+                        false,
+                        task.exception?.localizedMessage ?: "Google login failed."
+                    )
+                }
+            }
+    }
+
+    /**
+     * Check whether the currently logged-in Firebase user
+     * matches the supplied email.
+     */
+    fun userExists(
+        context: Context,
+        email: String
+    ): Boolean {
+        val currentUser = firebaseAuth.currentUser
+        val cleanEmail = email.trim().lowercase()
+
+        return currentUser?.email?.trim()?.lowercase() == cleanEmail
+    }
+
+    /**
+     * Get username/display name of the current Firebase user.
+     */
+    fun getUsername(
+        context: Context,
+        email: String
+    ): String {
+        val user = firebaseAuth.currentUser
+
+        if (user != null) {
+            val displayName = user.displayName?.trim()
+
+            if (!displayName.isNullOrEmpty()) {
+                return displayName
+            }
+
+            val userEmail = user.email?.trim()
+
+            if (!userEmail.isNullOrEmpty()) {
+                return userEmail.substringBefore("@")
+            }
         }
+
+        val cleanEmail = email.trim().lowercase()
+
+        return cleanEmail.substringBefore("@")
+            .ifEmpty { "Trader" }
     }
 
-    fun authenticate(context: Context, email: String, pass: String): Boolean {
+    /**
+     * Send Firebase password-reset email.
+     *
+     * Firebase handles the actual password reset securely.
+     */
+    fun resetPassword(
+        context: Context,
+        email: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
         val cleanEmail = email.trim().lowercase()
-        val prefs = getPrefs(context)
-        val storedPass = prefs.getString("${PREFIX_USER}$cleanEmail", null)
-        
-        // Match existing password or Google auth
-        if (storedPass != null && (storedPass == pass || pass == "GOOGLE_AUTH")) {
-            setSession(context, cleanEmail)
-            return true
+
+        if (cleanEmail.isEmpty()) {
+            onResult(false, "Please enter your email address.")
+            return
         }
 
-        // Auto-Register Fallback: If user signs in with a valid password but record was wiped, restore account seamlessly
-        if (storedPass == null && pass.length >= 4) {
-            val generatedUsername = cleanEmail.substringBefore("@")
-            registerUser(context, cleanEmail, pass, generatedUsername)
-            return true
-        }
+        firebaseAuth
+            .sendPasswordResetEmail(cleanEmail)
+            .addOnCompleteListener { task ->
 
-        return false
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(
+                        false,
+                        task.exception?.localizedMessage
+                            ?: "Unable to send password reset email."
+                    )
+                }
+            }
     }
 
-    fun userExists(context: Context, email: String): Boolean {
-        val cleanEmail = email.trim().lowercase()
-        return getPrefs(context).contains("${PREFIX_USER}$cleanEmail")
-    }
-
-    fun getUsername(context: Context, email: String): String {
-        val cleanEmail = email.trim().lowercase()
-        return getPrefs(context).getString("${PREFIX_NAME}$cleanEmail", cleanEmail.substringBefore("@")) ?: "Trader"
-    }
-
-    fun resetPassword(context: Context, email: String, newPass: String): Boolean {
-        val cleanEmail = email.trim().lowercase()
-        val prefs = getPrefs(context)
-        return if (prefs.contains("${PREFIX_USER}$cleanEmail")) {
-            prefs.edit().putString("${PREFIX_USER}$cleanEmail", newPass).commit()
-            true
-        } else {
-            // If wiped, allow setting new password directly
-            registerUser(context, cleanEmail, newPass, cleanEmail.substringBefore("@"))
-            true
-        }
-    }
-
+    /**
+     * Get currently logged-in Firebase user's email.
+     */
     fun getCurrentSession(context: Context): String? {
-        return getPrefs(context).getString(KEY_SESSION, null)
+        return firebaseAuth.currentUser?.email
     }
 
-    fun setSession(context: Context, email: String) {
-        getPrefs(context).edit().putString(KEY_SESSION, email.trim().lowercase()).commit()
+    /**
+     * Kept for compatibility with existing app code.
+     * Firebase itself manages the authenticated session.
+     */
+    fun setSession(
+        context: Context,
+        email: String
+    ) {
+        // Firebase Authentication manages the session automatically.
     }
 
+    /**
+     * Logout from Firebase.
+     */
     fun clearSession(context: Context) {
-        getPrefs(context).edit().remove(KEY_SESSION).commit()
+        firebaseAuth.signOut()
+    }
+
+    /**
+     * Returns the currently authenticated Firebase user.
+     */
+    fun getCurrentUser(): FirebaseUser? {
+        return firebaseAuth.currentUser
     }
 }
