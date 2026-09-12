@@ -11,9 +11,6 @@ object UserDataStore {
     private val firebaseAuth: FirebaseAuth
         get() = FirebaseAuth.getInstance()
 
-    /**
-     * Email + Password Signup
-     */
     fun registerUser(
         context: Context,
         email: String,
@@ -39,19 +36,22 @@ object UserDataStore {
                 val user = firebaseAuth.currentUser
 
                 if (user == null) {
-                    onResult(false, "Account created but user session was not found.")
+                    onResult(
+                        false,
+                        "Account created but user session was not found."
+                    )
                     return@addOnCompleteListener
                 }
 
-                // Save username/display name in Firebase profile
+                val finalUsername =
+                    if (cleanUsername.isNotEmpty()) {
+                        cleanUsername
+                    } else {
+                        cleanEmail.substringBefore("@")
+                    }
+
                 val profileUpdates = UserProfileChangeRequest.Builder()
-                    .setDisplayName(
-                        if (cleanUsername.isNotEmpty()) {
-                            cleanUsername
-                        } else {
-                            cleanEmail.substringBefore("@")
-                        }
-                    )
+                    .setDisplayName(finalUsername)
                     .build()
 
                 user.updateProfile(profileUpdates)
@@ -61,9 +61,6 @@ object UserDataStore {
             }
     }
 
-    /**
-     * Email + Password Login
-     */
     fun authenticate(
         context: Context,
         email: String,
@@ -87,9 +84,6 @@ object UserDataStore {
             }
     }
 
-    /**
-     * Google Login using Firebase Authentication
-     */
     fun authenticateWithGoogle(
         context: Context,
         idToken: String,
@@ -106,29 +100,21 @@ object UserDataStore {
                 } else {
                     onResult(
                         false,
-                        task.exception?.localizedMessage ?: "Google login failed."
+                        task.exception?.localizedMessage
+                            ?: "Google login failed."
                     )
                 }
             }
     }
 
-    /**
-     * Check whether the currently logged-in Firebase user
-     * matches the supplied email.
-     */
-    fun userExists(
-        context: Context,
-        email: String
-    ): Boolean {
-        val currentUser = firebaseAuth.currentUser
-        val cleanEmail = email.trim().lowercase()
-
-        return currentUser?.email?.trim()?.lowercase() == cleanEmail
+    fun getCurrentUser(): FirebaseUser? {
+        return firebaseAuth.currentUser
     }
 
-    /**
-     * Get username/display name of the current Firebase user.
-     */
+    fun getCurrentSession(context: Context): String? {
+        return firebaseAuth.currentUser?.email
+    }
+
     fun getUsername(
         context: Context,
         email: String
@@ -151,15 +137,49 @@ object UserDataStore {
 
         val cleanEmail = email.trim().lowercase()
 
-        return cleanEmail.substringBefore("@")
+        return cleanEmail
+            .substringBefore("@")
             .ifEmpty { "Trader" }
     }
 
-    /**
-     * Send Firebase password-reset email.
-     *
-     * Firebase handles the actual password reset securely.
-     */
+    fun updateUsername(
+        context: Context,
+        username: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        val user = firebaseAuth.currentUser
+
+        if (user == null) {
+            onResult(false, "No logged-in user.")
+            return
+        }
+
+        val cleanUsername = username.trim()
+
+        if (cleanUsername.isEmpty()) {
+            onResult(false, "Username cannot be empty.")
+            return
+        }
+
+        val profileUpdates = UserProfileChangeRequest.Builder()
+            .setDisplayName(cleanUsername)
+            .build()
+
+        user.updateProfile(profileUpdates)
+            .addOnCompleteListener { task ->
+
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(
+                        false,
+                        task.exception?.localizedMessage
+                            ?: "Unable to update username."
+                    )
+                }
+            }
+    }
+
     fun resetPassword(
         context: Context,
         email: String,
@@ -188,35 +208,28 @@ object UserDataStore {
             }
     }
 
-    /**
-     * Get currently logged-in Firebase user's email.
-     */
-    fun getCurrentSession(context: Context): String? {
-        return firebaseAuth.currentUser?.email
+    fun userExists(
+        context: Context,
+        email: String
+    ): Boolean {
+        val currentUser = firebaseAuth.currentUser
+        val cleanEmail = email.trim().lowercase()
+
+        return currentUser?.email
+            ?.trim()
+            ?.lowercase() == cleanEmail
     }
 
-    /**
-     * Kept for compatibility with existing app code.
-     * Firebase itself manages the authenticated session.
-     */
     fun setSession(
         context: Context,
         email: String
     ) {
-        // Firebase Authentication manages the session automatically.
+        // Firebase Authentication automatically manages the session.
     }
 
-    /**
-     * Logout from Firebase.
-     */
-    fun clearSession(context: Context) {
+    fun clearSession(
+        context: Context
+    ) {
         firebaseAuth.signOut()
-    }
-
-    /**
-     * Returns the currently authenticated Firebase user.
-     */
-    fun getCurrentUser(): FirebaseUser? {
-        return firebaseAuth.currentUser
     }
 }
