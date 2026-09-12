@@ -33,6 +33,7 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
         }
+
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
@@ -95,7 +96,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    // Compatible with this project's Kotlin 1.9.22 setup
+    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
