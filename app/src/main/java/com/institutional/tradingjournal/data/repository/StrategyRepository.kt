@@ -10,26 +10,19 @@ import javax.inject.Singleton
 class StrategyRepository @Inject constructor(
     private val strategyDao: StrategyDao
 ) {
-    val activeStrategies: Flow<List<StrategyEntity>> = strategyDao.getAllActiveStrategies()
+    fun getAllActiveStrategies(): Flow<List<StrategyEntity>> = strategyDao.getAllActiveStrategies()
 
-    suspend fun checkAndSeedDefaultStrategies() {
+    suspend fun checkAndInsertDefaults(email: String = "") {
         if (strategyDao.getStrategyCount() == 0) {
-            DefaultStrategies.list.forEach { strategy ->
+            DefaultStrategies.getList(email).forEach { strategy ->
                 strategyDao.insertStrategy(strategy)
             }
         }
     }
 
-    suspend fun insertStrategy(strategy: StrategyEntity): Long {
-        return strategyDao.insertStrategy(strategy)
-    }
+    suspend fun insertStrategy(strategy: StrategyEntity): Long = strategyDao.insertStrategy(strategy)
 
-    suspend fun updateStrategy(strategy: StrategyEntity) {
-        strategyDao.updateStrategy(strategy)
-    }
+    suspend fun updateStrategy(strategy: StrategyEntity) = strategyDao.updateStrategy(strategy)
 
-    suspend fun deleteStrategy(strategy: StrategyEntity) {
-        strategyDao.deleteStrategy(strategy)
-    }
+    suspend fun deleteStrategy(strategy: StrategyEntity) = strategyDao.deleteStrategy(strategy)
 }
-

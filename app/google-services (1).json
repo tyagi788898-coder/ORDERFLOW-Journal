@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "618729179730",
+    "project_id": "orderflow-journal",
+    "storage_bucket": "orderflow-journal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:618729179730:android:78971e6e31c9261d6ded8b",
+        "android_client_info": {
+          "package_name": "com.institutional.tradingjournal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzOoLdWTHnpUCQwuw2IZ-4jqPc8txO4OU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "618729179730-7l7pb3joupbmc4n734u9nn5qt6o1ngjk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -12,64 +12,59 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.institutional.tradingjournal.model.TradeEntry
 import com.institutional.tradingjournal.ui.components.OrderflowBottomBar
 import com.institutional.tradingjournal.ui.navigation.OrderflowNavGraph
-import com.institutional.tradingjournal.ui.navigation.Screen
+import dagger.hilt.android.AndroidEntryPoint
 
-@Composable
-fun OrderflowJournalTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) darkColorScheme(primary = Color(0xFFFFC107), background = Color(0xFF090A0F), surface = Color(0xFF12141C)) 
-        else lightColorScheme(primary = Color(0xFFFFC107), background = Color(0xFFF4F6F9), surface = Color.White),
-        content = content
-    )
-}
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            var isDark by remember { mutableStateOf(true) }
-            val tradeList = remember { mutableStateListOf<TradeEntry>().apply { addAll(TradeStorage.loadTrades(this@MainActivity)) } }
+            var isDarkTheme by remember { mutableStateOf(true) }
+            val navController = rememberNavController()
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route ?: ""
 
-            OrderflowJournalTheme(darkTheme = isDark) {
-                val navController = rememberNavController()
-                var currentRoute by remember { mutableStateOf(Screen.Splash.route) }
-                navController.addOnDestinationChangedListener { _, destination, _ -> currentRoute = destination.route ?: Screen.Splash.route }
+            val colorScheme = if (isDarkTheme) {
+                darkColorScheme(
+                    background = Color(0xFF090A0F),
+                    surface = Color(0xFF12141C),
+                    primary = Color(0xFFFFC107)
+                )
+            } else {
+                lightColorScheme(
+                    background = Color(0xFFF4F6F9),
+                    surface = Color.White,
+                    primary = Color(0xFF1976D2)
+                )
+            }
 
+            MaterialTheme(colorScheme = colorScheme) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        if (currentRoute != Screen.Splash.route) {
-                            OrderflowBottomBar(currentRoute = currentRoute, onNavigate = { route ->
-                                navController.navigate(route) { popUpTo(Screen.Dashboard.route) { saveState = true }; launchSingleTop = true; restoreState = true }
-                            })
-                        }
+                        OrderflowBottomBar(
+                            currentRoute = currentRoute,
+                            onNavigate = { route ->
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
                     }
                 ) { innerPadding ->
                     OrderflowNavGraph(
                         navController = navController,
-                        isDark = isDark,
-                        onToggleTheme = { isDark = it },
-                        tradeList = tradeList,
-                        onTradeLogged = { newTrade ->
-                            tradeList.add(0, newTrade)
-                            TradeStorage.saveTrades(this@MainActivity, tradeList)
-                        },
-                        onDeleteTrade = { tradeToDelete ->
-                            tradeList.remove(tradeToDelete)
-                            TradeStorage.saveTrades(this@MainActivity, tradeList)
-                        },
-                        onStatusUpdate = { trade, status, pnl, pair, session ->
-                            val index = tradeList.indexOf(trade)
-                            if (index != -1) {
-                                tradeList[index] = trade.copy(result = status, pnlAmount = pnl, pair = pair, session = session)
-                                TradeStorage.saveTrades(this@MainActivity, tradeList)
-                            }
-                        },
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        isDark = isDarkTheme,
+                        onToggleTheme = { isDarkTheme = it }
                     )
                 }
             }

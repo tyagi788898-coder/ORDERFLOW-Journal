@@ -10,31 +10,17 @@ import javax.inject.Singleton
 class TradeRepository @Inject constructor(
     private val tradeDao: TradeDao
 ) {
-    val allTrades: Flow<List<TradeEntity>> = tradeDao.getAllTrades()
-    val totalPnL: Flow<Double?> = tradeDao.getTotalPnL()
-    val totalTradesCount: Flow<Int> = tradeDao.getTotalTradesCount()
+    fun getAllTrades(): Flow<List<TradeEntity>> = tradeDao.getAllTrades()
 
-    suspend fun saveTrade(trade: TradeEntity): Long {
-        return tradeDao.insertTrade(trade)
-    }
+    fun getTradesByEmail(email: String): Flow<List<TradeEntity>> = tradeDao.getTradesByEmail(email)
 
-    suspend fun updateTrade(trade: TradeEntity) {
-        tradeDao.updateTrade(trade)
-    }
+    suspend fun insertTrade(trade: TradeEntity): Long = tradeDao.insertTrade(trade)
 
-    suspend fun deleteTrade(trade: TradeEntity) {
-        tradeDao.deleteTrade(trade)
-    }
+    suspend fun updateTrade(trade: TradeEntity) = tradeDao.updateTrade(trade)
 
-    // Auto calculate Grade based on Score (0 - 100)
-    fun calculateGrade(score: Int): String {
-        return when {
-            score >= 90 -> "A+"
-            score >= 80 -> "A"
-            score >= 70 -> "B"
-            score >= 50 -> "C"
-            else -> "D"
-        }
-    }
+    suspend fun deleteTrade(trade: TradeEntity) = tradeDao.deleteTrade(trade)
+
+    fun getTotalPnL(): Flow<Double?> = tradeDao.getTotalPnL()
+
+    fun getTotalTradesCount(): Flow<Int> = tradeDao.getTotalTradesCount()
 }
-

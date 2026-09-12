@@ -9,7 +9,7 @@ import com.institutional.tradingjournal.data.entity.TradeEntity
 
 @Database(
     entities = [TradeEntity::class, StrategyEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

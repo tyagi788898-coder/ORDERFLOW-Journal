@@ -5,44 +5,45 @@ import androidx.lifecycle.viewModelScope
 import com.institutional.tradingjournal.data.entity.StrategyEntity
 import com.institutional.tradingjournal.data.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class StrategyViewModel @Inject constructor(
-    private val strategyRepository: StrategyRepository
+    private val repository: StrategyRepository
 ) : ViewModel() {
 
-    val activeStrategies: StateFlow<List<StrategyEntity>> = strategyRepository.activeStrategies
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val strategies: StateFlow<List<StrategyEntity>> = repository.getAllActiveStrategies()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
-    init {
+    fun seedDefaults(email: String = "") {
         viewModelScope.launch {
-            strategyRepository.checkAndSeedDefaultStrategies()
+            repository.checkAndInsertDefaults(email)
         }
     }
 
-    fun createCustomStrategy(name: String, description: String, colorHex: String, checklistItems: List<String>) {
+    fun addStrategy(strategy: StrategyEntity) {
         viewModelScope.launch {
-            val formattedChecklist = checklistItems.joinToString("|")
-            val newStrategy = StrategyEntity(
-                name = name,
-                description = description,
-                colorHex = colorHex,
-                iconName = "Bookmark",
-                checklistItems = formattedChecklist,
-                scoreWeight = 100,
-                isDefault = false
-            )
-            strategyRepository.insertStrategy(newStrategy)
+            repository.insertStrategy(strategy)
+        }
+    }
+
+    fun updateStrategy(strategy: StrategyEntity) {
+        viewModelScope.launch {
+            repository.updateStrategy(strategy)
         }
     }
 
     fun deleteStrategy(strategy: StrategyEntity) {
         viewModelScope.launch {
-            strategyRepository.deleteStrategy(strategy)
+            repository.deleteStrategy(strategy)
         }
     }
 }
-

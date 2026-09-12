@@ -18,7 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.institutional.tradingjournal.data.UserDataStore
+import com.institutional.tradingjournal.data.entity.TradeEntity
 import com.institutional.tradingjournal.model.TradeEntry
+import com.institutional.tradingjournal.ui.viewmodel.TradeViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -34,11 +37,13 @@ data class StrategyConfig(
 
 @Composable
 fun JournalChecklistScreen(
-    isDark: Boolean,
+    isDark: Boolean = true,
+    tradeViewModel: TradeViewModel? = null,
     onTradeLogged: (TradeEntry) -> Unit = {}
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+    val currentEmail = UserDataStore.getCurrentSession(context) ?: "default_trader"
 
     val bgColor = if (isDark) Color(0xFF090A0F) else Color(0xFFF4F6F9)
     val cardBg = if (isDark) Color(0xFF12141C) else Color.White
@@ -251,7 +256,6 @@ fun JournalChecklistScreen(
             }
         }
 
-        // Clean Strategy Buttons Row (NO ICONS inside)
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -375,7 +379,7 @@ fun JournalChecklistScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LinearProgressIndicator(
-                    progress = progressPercentage / 100f,
+                    progress = { progressPercentage / 100f },
                     modifier = Modifier.fillMaxWidth().height(8.dp),
                     color = Color(0xFFFFC107),
                     trackColor = inputBg,
@@ -417,6 +421,7 @@ fun JournalChecklistScreen(
             onClick = {
                 val numericVal = pnlAmountText.replace("+", "").replace("-", "").replace("$", "").toDoubleOrNull() ?: 0.0
                 val finalPnl = if (pnlAmountText.startsWith("-")) -kotlin.math.abs(numericVal) else kotlin.math.abs(numericVal)
+                
                 val newEntry = TradeEntry(
                     date = selectedDateText,
                     pair = pair,
@@ -427,6 +432,30 @@ fun JournalChecklistScreen(
                     scorePercentage = progressPercentage
                 )
                 onTradeLogged(newEntry)
+
+                // Save clean metadata into emotion field in standard format
+                val persistentMeta = "STATUS:$resultStatus | SCORE:$progressPercentage%"
+
+                tradeViewModel?.let { vm ->
+                    val tradeRecord = TradeEntity(
+                        email = currentEmail,
+                        tradeIdString = "TRD_${System.currentTimeMillis()}",
+                        timestamp = System.currentTimeMillis(),
+                        pair = pair.uppercase().trim(),
+                        symbol = pair.uppercase().trim(),
+                        direction = if (finalPnl >= 0) "BUY" else "SELL",
+                        lotSize = 1.0,
+                        entryPrice = 0.0,
+                        exitPrice = 0.0,
+                        pnl = finalPnl,
+                        date = selectedDateText,
+                        strategyName = currentStrategy.title,
+                        session = session,
+                        emotion = persistentMeta
+                    )
+                    vm.insertTrade(tradeRecord)
+                }
+
                 Toast.makeText(context, "Trade Logged Successfully!", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),

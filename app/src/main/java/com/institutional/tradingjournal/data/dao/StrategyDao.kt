@@ -15,16 +15,15 @@ interface StrategyDao {
     @Delete
     suspend fun deleteStrategy(strategy: StrategyEntity)
 
-    @Query("SELECT * FROM strategies WHERE isHidden = 0 ORDER BY id ASC")
+    @Query("SELECT * FROM strategies WHERE email = :email ORDER BY id DESC")
+    fun getStrategiesByEmail(email: String): Flow<List<StrategyEntity>>
+
+    @Query("SELECT * FROM strategies WHERE isActive = 1 ORDER BY id DESC")
     fun getAllActiveStrategies(): Flow<List<StrategyEntity>>
 
-    @Query("SELECT * FROM strategies ORDER BY id ASC")
-    fun getAllStrategiesIncludingHidden(): Flow<List<StrategyEntity>>
-
-    @Query("SELECT * FROM strategies WHERE id = :id")
-    suspend fun getStrategyById(id: Long): StrategyEntity?
+    @Query("SELECT * FROM strategies ORDER BY id DESC")
+    fun getAllStrategies(): Flow<List<StrategyEntity>>
 
     @Query("SELECT COUNT(*) FROM strategies")
     suspend fun getStrategyCount(): Int
 }
-

@@ -15,11 +15,11 @@ interface TradeDao {
     @Delete
     suspend fun deleteTrade(trade: TradeEntity)
 
-    @Query("SELECT * FROM trades ORDER BY timestamp DESC")
-    fun getAllTrades(): Flow<List<TradeEntity>>
+    @Query("SELECT * FROM trades WHERE email = :email ORDER BY id DESC")
+    fun getTradesByEmail(email: String): Flow<List<TradeEntity>>
 
-    @Query("SELECT * FROM trades WHERE id = :id")
-    suspend fun getTradeById(id: Long): TradeEntity?
+    @Query("SELECT * FROM trades ORDER BY id DESC")
+    fun getAllTrades(): Flow<List<TradeEntity>>
 
     @Query("SELECT SUM(pnl) FROM trades")
     fun getTotalPnL(): Flow<Double?>
@@ -27,4 +27,3 @@ interface TradeDao {
     @Query("SELECT COUNT(*) FROM trades")
     fun getTotalTradesCount(): Flow<Int>
 }
-
