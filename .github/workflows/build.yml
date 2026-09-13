@@ -26,37 +26,43 @@ jobs:
       with:
         gradle-version: '8.5'
 
-    - name: Generate Debug Keystore
+    - name: Restore Permanent Keystore
+      env:
+        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       run: |
         mkdir -p ~/.android
+
+        echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ~/orderflow-release.keystore
+
         rm -f ~/.android/debug.keystore
 
-        keytool -genkeypair \
-          -v \
-          -keystore ~/.android/debug.keystore \
-          -alias androiddebugkey \
-          -keypass android \
-          -storepass android \
-          -keyalg RSA \
-          -keysize 2048 \
-          -validity 10000 \
-          -dname "CN=Android Debug,O=Android,C=US"
+        keytool -importkeystore \
+          -srckeystore ~/orderflow-release.keystore \
+          -srcstoretype JKS \
+          -srcstorepass "$ANDROID_KEYSTORE_PASSWORD" \
+          -srcalias "$ANDROID_KEY_ALIAS" \
+          -srckeypass "$ANDROID_KEY_PASSWORD" \
+          -destkeystore ~/.android/debug.keystore \
+          -deststoretype JKS \
+          -deststorepass android \
+          -destalias androiddebugkey \
+          -destkeypass android
 
-    - name: Show Signing Certificate
+    - name: Verify Signing Certificate
       run: |
-        echo "=========================================="
-        echo "ANDROID APK SIGNING CERTIFICATE"
-        echo "=========================================="
+        echo "========================================"
+        echo "ORDERFLOW JOURNAL SIGNING CERTIFICATE"
+        echo "========================================"
 
-        keytool -list \
-          -v \
+        keytool -list -v \
           -keystore ~/.android/debug.keystore \
           -alias androiddebugkey \
-          -storepass android
+          -storepass android | grep -E "Alias name:|SHA1:|SHA256:"
 
-        echo "=========================================="
-        echo "SHA-1 and SHA-256 are shown above."
-        echo "=========================================="
+        echo "========================================"
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
