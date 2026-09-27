@@ -5,6 +5,9 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object GoogleAuthHelper {
 
@@ -24,9 +27,7 @@ object GoogleAuthHelper {
             .addCredentialOption(googleIdOption)
             .build()
 
-        kotlinx.coroutines.CoroutineScope(
-            kotlinx.coroutines.Dispatchers.Main
-        ).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             try {
                 val result = credentialManager.getCredential(
                     context = context,
@@ -35,7 +36,10 @@ object GoogleAuthHelper {
 
                 val credential = result.credential
 
-                if (credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                if (
+                    credential.type !=
+                    GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
                     onResult(
                         false,
                         null,
@@ -45,7 +49,9 @@ object GoogleAuthHelper {
                 }
 
                 val googleCredential =
-                    GoogleIdTokenCredential.createFrom(credential.data)
+                    GoogleIdTokenCredential.createFrom(
+                        credential.data
+                    )
 
                 val idToken = googleCredential.idToken
 
@@ -65,10 +71,12 @@ object GoogleAuthHelper {
                 )
 
             } catch (e: Exception) {
+
                 onResult(
                     false,
                     null,
-                    e.localizedMessage ?: "Google Sign-In failed."
+                    e.localizedMessage
+                        ?: "Google Sign-In failed."
                 )
             }
         }
