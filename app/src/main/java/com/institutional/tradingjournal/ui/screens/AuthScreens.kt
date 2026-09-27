@@ -1,8 +1,6 @@
 package com.institutional.tradingjournal.ui.screens
 
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,8 +24,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.common.api.ApiException
 import com.institutional.tradingjournal.GoogleAuthHelper
 import com.institutional.tradingjournal.R
 import com.institutional.tradingjournal.UserPreferences
@@ -102,35 +98,18 @@ private fun finishGoogleUser(
 
     val finalUsername: String
 
-    /*
-     * If the same Google account was already used on this device
-     * and a real username is already saved, keep it.
-     */
     if (
         savedEmail == cleanEmail &&
         savedUsername.isNotEmpty() &&
         savedUsername != "Trader"
     ) {
         finalUsername = savedUsername
-    }
-    /*
-     * If Firebase already contains our generated Trader1234 style
-     * username, keep the same username after reinstall/login.
-     */
-    else if (isGeneratedTraderUsername(firebaseUsername)) {
+    } else if (isGeneratedTraderUsername(firebaseUsername)) {
         finalUsername = firebaseUsername
-    }
-    /*
-     * Otherwise generate a new Trader + 4 digit username.
-     */
-    else {
+    } else {
         finalUsername = generateTraderUsername()
     }
 
-    /*
-     * Save the username in Firebase profile as well as local
-     * UserPreferences so Settings can display it.
-     */
     UserDataStore.updateUsername(
         context = context,
         username = finalUsername
@@ -312,99 +291,6 @@ fun LoginScreen(
     var isLoading by remember {
         mutableStateOf(false)
     }
-
-    val googleLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-
-            if (result.data == null) {
-                isLoading = false
-                return@rememberLauncherForActivityResult
-            }
-
-            val task =
-                GoogleSignIn.getSignedInAccountFromIntent(
-                    result.data
-                )
-
-            try {
-
-                val account =
-                    task.getResult(ApiException::class.java)
-
-                val idToken =
-                    account.idToken
-
-                if (idToken.isNullOrEmpty()) {
-                    isLoading = false
-
-                    Toast.makeText(
-                        context,
-                        "Google authentication token not received.",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    return@rememberLauncherForActivityResult
-                }
-
-                UserDataStore.authenticateWithGoogle(
-                    context = context,
-                    idToken = idToken
-                ) { success, error ->
-
-                    if (!success) {
-                        isLoading = false
-
-                        Toast.makeText(
-                            context,
-                            error ?: "Google login failed.",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        return@authenticateWithGoogle
-                    }
-
-                    finishGoogleUser(
-                        context = context,
-                        email = account.email ?: ""
-                    ) { finalUsername ->
-
-                        isLoading = false
-
-                        Toast.makeText(
-                            context,
-                            "Welcome $finalUsername",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        onLoginSuccess()
-                    }
-                }
-
-            } catch (e: ApiException) {
-
-                isLoading = false
-
-                if (e.statusCode != 12501) {
-                    Toast.makeText(
-                        context,
-                        "Google Sign-In failed. Code: ${e.statusCode}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-
-            } catch (e: Exception) {
-
-                isLoading = false
-
-                Toast.makeText(
-                    context,
-                    "Google Sign-In failed: ${e.localizedMessage ?: "Unknown error"}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
 
 
     if (showResetDialog) {
@@ -799,24 +685,65 @@ fun LoginScreen(
 
                     isLoading = true
 
-                    try {
+                    GoogleAuthHelper.signInWithGoogle(
+                        context = context,
+                        webClientId = GOOGLE_WEB_CLIENT_ID
+                    ) { success, idToken, error ->
 
-                        googleLauncher.launch(
-                            GoogleAuthHelper.getSignInIntent(
+                        if (!success || idToken.isNullOrEmpty()) {
+
+                            isLoading = false
+
+                            Toast.makeText(
                                 context,
-                                GOOGLE_WEB_CLIENT_ID
-                            )
-                        )
+                                error ?: "Google Sign-In failed.",
+                                Toast.LENGTH_LONG
+                            ).show()
 
-                    } catch (e: Exception) {
+                            return@signInWithGoogle
+                        }
 
-                        isLoading = false
+                        UserDataStore.authenticateWithGoogle(
+                            context = context,
+                            idToken = idToken
+                        ) { firebaseSuccess, firebaseError ->
 
-                        Toast.makeText(
-                            context,
-                            "Unable to open Google Sign-In: ${e.localizedMessage ?: "Unknown error"}",
-                            Toast.LENGTH_LONG
-                        ).show()
+                            if (!firebaseSuccess) {
+
+                                isLoading = false
+
+                                Toast.makeText(
+                                    context,
+                                    firebaseError
+                                        ?: "Google login failed.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                return@authenticateWithGoogle
+                            }
+
+                            val googleEmail =
+                                UserDataStore
+                                    .getCurrentUser()
+                                    ?.email
+                                    .orEmpty()
+
+                            finishGoogleUser(
+                                context = context,
+                                email = googleEmail
+                            ) { finalUsername ->
+
+                                isLoading = false
+
+                                Toast.makeText(
+                                    context,
+                                    "Welcome $finalUsername",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                onLoginSuccess()
+                            }
+                        }
                     }
                 }
         ) {
@@ -899,103 +826,6 @@ fun SignupScreen(
     var isLoading by remember {
         mutableStateOf(false)
     }
-
-
-    val googleLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-
-            if (result.data == null) {
-                isLoading = false
-                return@rememberLauncherForActivityResult
-            }
-
-            val task =
-                GoogleSignIn.getSignedInAccountFromIntent(
-                    result.data
-                )
-
-            try {
-
-                val account =
-                    task.getResult(ApiException::class.java)
-
-                val idToken =
-                    account.idToken
-
-                if (idToken.isNullOrEmpty()) {
-
-                    isLoading = false
-
-                    Toast.makeText(
-                        context,
-                        "Google authentication token not received.",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    return@rememberLauncherForActivityResult
-                }
-
-                UserDataStore.authenticateWithGoogle(
-                    context = context,
-                    idToken = idToken
-                ) { success, error ->
-
-                    if (!success) {
-
-                        isLoading = false
-
-                        Toast.makeText(
-                            context,
-                            error ?: "Google account setup failed.",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        return@authenticateWithGoogle
-                    }
-
-                    finishGoogleUser(
-                        context = context,
-                        email = account.email ?: ""
-                    ) { finalUsername ->
-
-                        isLoading = false
-
-                        Toast.makeText(
-                            context,
-                            "Welcome $finalUsername",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        onSignupSuccess()
-                    }
-                }
-
-            } catch (e: ApiException) {
-
-                isLoading = false
-
-                if (e.statusCode != 12501) {
-
-                    Toast.makeText(
-                        context,
-                        "Google Sign-In failed. Code: ${e.statusCode}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-
-            } catch (e: Exception) {
-
-                isLoading = false
-
-                Toast.makeText(
-                    context,
-                    "Google Sign-In failed: ${e.localizedMessage ?: "Unknown error"}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
 
 
     Column(
@@ -1284,24 +1114,65 @@ fun SignupScreen(
 
                     isLoading = true
 
-                    try {
+                    GoogleAuthHelper.signInWithGoogle(
+                        context = context,
+                        webClientId = GOOGLE_WEB_CLIENT_ID
+                    ) { success, idToken, error ->
 
-                        googleLauncher.launch(
-                            GoogleAuthHelper.getSignInIntent(
+                        if (!success || idToken.isNullOrEmpty()) {
+
+                            isLoading = false
+
+                            Toast.makeText(
                                 context,
-                                GOOGLE_WEB_CLIENT_ID
-                            )
-                        )
+                                error ?: "Google Sign-In failed.",
+                                Toast.LENGTH_LONG
+                            ).show()
 
-                    } catch (e: Exception) {
+                            return@signInWithGoogle
+                        }
 
-                        isLoading = false
+                        UserDataStore.authenticateWithGoogle(
+                            context = context,
+                            idToken = idToken
+                        ) { firebaseSuccess, firebaseError ->
 
-                        Toast.makeText(
-                            context,
-                            "Unable to open Google Sign-In: ${e.localizedMessage ?: "Unknown error"}",
-                            Toast.LENGTH_LONG
-                        ).show()
+                            if (!firebaseSuccess) {
+
+                                isLoading = false
+
+                                Toast.makeText(
+                                    context,
+                                    firebaseError
+                                        ?: "Google account setup failed.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                return@authenticateWithGoogle
+                            }
+
+                            val googleEmail =
+                                UserDataStore
+                                    .getCurrentUser()
+                                    ?.email
+                                    .orEmpty()
+
+                            finishGoogleUser(
+                                context = context,
+                                email = googleEmail
+                            ) { finalUsername ->
+
+                                isLoading = false
+
+                                Toast.makeText(
+                                    context,
+                                    "Welcome $finalUsername",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                onSignupSuccess()
+                            }
+                        }
                     }
                 }
         ) {
