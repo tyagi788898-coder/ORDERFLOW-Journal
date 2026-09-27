@@ -91,12 +91,18 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
-    // Google Sign-In & Gson
+    // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // Modern Google Sign-In / Credential Manager
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Gson
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Firebase
-    // Compatible with this project's Kotlin 1.9.22 setup
     implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
