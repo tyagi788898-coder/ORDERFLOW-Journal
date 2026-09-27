@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.institutional.tradingjournal"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.institutional.tradingjournal"
