@@ -1,25 +1,45 @@
 package com.institutional.tradingjournal
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.util.Base64
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
-import android.util.Base64
 
 object GoogleAuthHelper {
 
+    private fun findActivity(context: Context): Activity? {
+        var currentContext = context
+
+        while (currentContext is ContextWrapper) {
+            if (currentContext is Activity) {
+                return currentContext
+            }
+
+            currentContext = currentContext.baseContext
+        }
+
+        return null
+    }
+
     private fun generateSecureRandomNonce(): String {
         val randomBytes = ByteArray(32)
+
         SecureRandom().nextBytes(randomBytes)
 
         return Base64.encodeToString(
             randomBytes,
-            Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING
+            Base64.NO_WRAP or
+                Base64.URL_SAFE or
+                Base64.NO_PADDING
         )
     }
 
@@ -28,44 +48,62 @@ object GoogleAuthHelper {
         webClientId: String,
         onResult: (Boolean, String?, String?) -> Unit
     ) {
-        val credentialManager = CredentialManager.create(context)
 
-        /*
-         * IMPORTANT:
-         * This is the explicit "Continue with Google" button flow.
-         * Google recommends GetSignInWithGoogleOption for this flow.
-         */
+        val activity = findActivity(context)
+
+        if (activity == null) {
+            onResult(
+                false,
+                null,
+                "Google Sign-In requires an Activity context."
+            )
+            return
+        }
+
+        val credentialManager =
+            CredentialManager.create(activity)
+
         val signInWithGoogleOption =
             GetSignInWithGoogleOption.Builder(
                 serverClientId = webClientId
             )
-                .setNonce(generateSecureRandomNonce())
+                .setNonce(
+                    generateSecureRandomNonce()
+                )
                 .build()
 
         /*
-         * The Google button flow must contain exactly
-         * one GetSignInWithGoogleOption.
+         * Explicit "Continue with Google" button flow.
+         *
+         * Google requires this request to contain
+         * exactly one GetSignInWithGoogleOption.
          */
         val request =
             GetCredentialRequest.Builder()
-                .addCredentialOption(signInWithGoogleOption)
+                .addCredentialOption(
+                    signInWithGoogleOption
+                )
                 .build()
 
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(
+            Dispatchers.Main
+        ).launch {
 
             try {
 
                 val result =
                     credentialManager.getCredential(
-                        context = context,
+                        context = activity,
                         request = request
                     )
 
-                val credential = result.credential
+                val credential =
+                    result.credential
 
                 if (
                     credential.type !=
-                    GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                    GoogleIdTokenCredential
+                        .TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
                 ) {
 
                     onResult(
@@ -100,6 +138,15 @@ object GoogleAuthHelper {
                     true,
                     idToken,
                     null
+                )
+
+            } catch (e: GetCredentialException) {
+
+                onResult(
+                    false,
+                    null,
+                    e.localizedMessage
+                        ?: "Google Sign-In was cancelled or failed."
                 )
 
             } catch (e: Exception) {
